@@ -1,3 +1,7 @@
+# Intro
+# In order to use this package while it is in development, the script must be inside the package. This may remain in the final as an example of use.
+# This package is developed in order to automate segmentation defects in fatigue fracture surfaces. Others have found great success using the Unet architecture, so an implimentation supporting an numbe rof input and output classes was developed. Multiple imput classes are supported so that height map data can be appended to the image data for improved characterization, and multiple output classes are supported so that multiple defect classes can be supported. 
+
 # %% Import
 import pandas as pd
 import re
@@ -37,26 +41,14 @@ check = re.compile(r'''
     (.*)?                                          # Any characters in between (greedy by default)
     \.(png|tif|tiff|jpg)$                          # File extension
     ''', re.VERBOSE | re.IGNORECASE)
-def print_dataframe(df):
-    row_structure = '|{:^50}|{:^10}|{:^10}|{:^15}|'
-    print(row_structure.format('Column name', 'Nulls','Values','Position'))
-    i=0
-    for column in df.columns:
-        nas = df[column].isna().sum()
-        print(row_structure.format(column,str(nas),str(len(df[column])-nas),str(i)))
-        i+=1
-def log_message(file_path, message):
-    # Get the current date and time
-    now = datetime.datetime.now()
-    timestamp = now.strftime('%Y-%m-%d %H:%M:%S')
+train_GAN - provides api to easily load in different models, datasets and loss functions to the model. Subclassing allows for easy modification of the training loop.
 
-    # Create the log entry
     log_entry = f'[{timestamp}] {message}\n'
 
     # Append the log entry to the file
     with open(file_path, 'a') as file:
         file.write(log_entry)
-def clean_Sample_num(x):
+def m(x):
     try:
         m_f = re.match(r'^([A-Z]+)(\d+)-[V]?(\d+|E\d+)[-]?(\d+)?',x)
     except TypeError:
@@ -211,7 +203,7 @@ def overload(path):
     else:
         return False
 def exclude(input):
-    conditions = ['.hdr', '.csv','.info','.xlsx','.pptx','.s0001','.zip','.model']
+    conditions = ['.hdr', '.csv','.info','.xlsx','.info','.pptx','.s0001','.zip','.model']
     for condition in conditions:
         if condition in input: return True
     return False
@@ -261,7 +253,7 @@ if __name__=="__main__":
     EP07 = pd.read_excel('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/fractography/EP07/EP07-Fractographical Data.xlsx')
     NASA = pd.read_excel('/home/aml334/CSE_MSE_RXF131/staging/mds3/fractography/NASA03/NASA Fractographical Data_Chris-Updated 9_2.xlsx',skiprows=1)
     output = pd.concat([EP04,EP05,EP07,NASA])
-    output['Sample#'] = output['Sample#'].apply(clean_Sample_num)
+    output['Sample#'] = output['Sample#'].apply(m)
     output.insert(0,'Test ID',output['Sample#'] + '-0')
     del EP04
     del EP05
@@ -278,7 +270,6 @@ if __name__=="__main__":
     del name_to_power
     del name_to_velocity
     del process_parameters
-
     #Brett Spreashsheet
     Brett_spreadsheet = pd.ExcelFile('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/fractography/4-pt Bend Data Master Spreadsheet_exit_8_27_24.xlsx')
     excel_df = pd.DataFrame()
@@ -288,6 +279,7 @@ if __name__=="__main__":
     del Brett_spreadsheet
 
     #Making key
+
     excel_df['Sample#'] = excel_df['Build ID'].apply(clean_BuildID) + '-'+excel_df['Build #'].apply(str).apply(lambda x:x.replace('V','').replace('.0','')).replace('O','')+'-'+excel_df['Test #'].apply(str).apply(lambda x:x.replace('V','').replace('.0',''))
     excel_df['Test ID'] = excel_df['Sample#'] +'-'+excel_df['Retest'].apply(str).apply(lambda x:x.replace('V','').replace('.0',''))
 
@@ -524,7 +516,7 @@ if __name__=="__main__":
         #     print(j[-30:])
         #     pass
         try:
-            combined_df = pd.merge(combined_df,dataframe,on='Sample#',suffixes=('',f'_{name[i][0]}'),how='outer').drop_duplicates().sort_values(by='Retest',ascending=False).drop_duplicates('Sample#')
+            combined_df = pd.merge(combined_df,dataframe,on='Sample#',suffixes=('',f'_{name[i][0]}'),how='outer').sort_values(by='Retest',ascending=False).drop_duplicates('Sample#')
         except Exception as e:
             print(e)
     combined_df.rename(columns={'path':'path_'+name[0][0]},inplace=True)
@@ -533,9 +525,9 @@ if __name__=="__main__":
     row_structure = '|{:^50}|{:^10}|{:^10}|{:^15}|'
     print(row_structure.format('Column name', 'Nulls','Values','Position'))
     i=0
-    for column in df.columns:
-        nas = df[column].isna().sum()
-        print(row_structure.format(column,str(nas),str(len(df[column])-nas),str(i)))
+    for column in combined_df.columns:
+        nas = combined_df[column].isna().sum()
+        print(row_structure.format(column,str(nas),str(len(combined_df[column])-nas),str(i)))
         log_message(LOG_FILE,str(row_structure.format(column,str(nas),str(len(combined_df[column])-nas),str(i))))
         i+=1
     # for m, i in combined_df.iterrows():
@@ -544,4 +536,4 @@ if __name__=="__main__":
     #         print(i['path_overload'])
 
 else:
-    print(__name__+' not being run')
+    print(__name__)
