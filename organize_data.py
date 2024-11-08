@@ -1,7 +1,3 @@
-# Intro
-# In order to use this package while it is in development, the script must be inside the package. This may remain in the final as an example of use.
-# This package is developed in order to automate segmentation defects in fatigue fracture surfaces. Others have found great success using the Unet architecture, so an implimentation supporting an numbe rof input and output classes was developed. Multiple imput classes are supported so that height map data can be appended to the image data for improved characterization, and multiple output classes are supported so that multiple defect classes can be supported. 
-
 # %% Import
 import pandas as pd
 import re
@@ -41,9 +37,9 @@ check = re.compile(r'''
     (.*)?                                          # Any characters in between (greedy by default)
     \.(png|tif|tiff|jpg)$                          # File extension
     ''', re.VERBOSE | re.IGNORECASE)
-train_GAN - provides api to easily load in different models, datasets and loss functions to the model. Subclassing allows for easy modification of the training loop.
 
-    log_entry = f'[{timestamp}] {message}\n'
+def log_message(file_path,message):
+    log_entry = f'[{datetime.datetime}] {message}\n'
 
     # Append the log entry to the file
     with open(file_path, 'a') as file:
