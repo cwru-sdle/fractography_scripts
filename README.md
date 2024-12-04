@@ -4,16 +4,13 @@ Organize_data needs to be restructured to make the data tidy. I can still merge 
 
 1. sample_id ('Sample#'): string, factor
 2. build_id ('Build ID'): string, factor
-3. sample_position ('Build #'): string, factor
-4. test_num ('Test #', 'Retest'): int
-5. hatch_spacing ('Hatch Spacing (mm)'): float
-6. scan_power ('Scan Power (W)'): float
-7. scan_velocity ('Scan velocity (mm/s)'): float
-8. energy_density (scan_power/scan_velocity * hatch_spacing * layer thickess): float
-9. test_stress ('mpa','σ max initiation (MPa)'): float
-10. R_ratio: float
-11. cycles_failure (Cycles, Cycles @ Failure): int
-12. test_result ('Failed?'): boolean
-13. image_class: string, factor
-14. image_path: string
-15. image_basename: string.
+3. build_plate_position ('Build #'): string, factor
+4. testing_position ('Test #'): int, factor
+4. scan_power_W ('Scan Power (W)'): float
+5. scan_velocity_mm_s ('Scan velocity (mm/s)'): float
+6. energy_density_J_mm3 (scan_power/scan_velocity * hatch_spacing * layer thickess): float
+7. test_stress_Mpa ('mpa','σ max initiation (MPa)'): float
+8. cycles (Cycles, Cycles @ Failure): int
+9. image_class: string, factor
+10. image_path: string
+11. image_basename: string

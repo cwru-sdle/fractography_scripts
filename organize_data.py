@@ -11,6 +11,17 @@ import numpy as np
 STITCHED_THRESHOLD = 3000000
 UPPER_RED_THRESHOLD = 1000
 LOWER_RED_THRESHOLD = 20
+HATCH_SPACING = 0.14 #mm
+LAYER_THICKNESS = 0.03 #mm
+
+LOG_FILE = '/home/aml334/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df_log.txt'
+MESSAGE = 'Added lower threshold for initation_marked_stitched'
+
+manuel_mask_path = '/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/keyence-fractography/manuel_mask'
+fractography_path = '/mnt/vstor/CSE_MSE_RXF131/staging/mds3/fractography'
+csv_dir = "/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/Sample#csvs"
+path_list = [fractography_path,manuel_mask_path]
+pd.set_option('display.max_rows', None)  # Display all rows
 
 check = re.compile(r'''
     ^
@@ -44,7 +55,7 @@ def log_message(file_path,message):
     # Append the log entry to the file
     with open(file_path, 'a') as file:
         file.write(log_entry)
-def m(x):
+def standardize_sample_num(x):
     try:
         m_f = re.match(r'^([A-Z]+)(\d+)-[V]?(\d+|E\d+)[-]?(\d+)?',x)
     except TypeError:
@@ -70,7 +81,7 @@ def clean_BuildID(input):
     try:
         match = re.match(r'([A-Z]+)(\d+)',input,re.IGNORECASE)
         if match:
-            prefix = match.group(1).lstrip('O')
+            prefix = match.group(1).upper().lstrip('O')
             numeric_part = match.group(2).lstrip('0')
             return prefix + numeric_part
     except TypeError:
@@ -225,13 +236,6 @@ def regex_basename(pattern):
         return type_func, series_func,posit_idx_func
     else:
         return None
-LOG_FILE = '/home/aml334/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df_log.txt'
-MESSAGE = 'Added lower threshold for initation_marked_stitched'
-
-manuel_mask_path = '/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/keyence-fractography/manuel_mask'
-fractography_path = '/mnt/vstor/CSE_MSE_RXF131/staging/mds3/fractography'
-csv_dir = "/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/Sample#csvs"
-path_list = [fractography_path,manuel_mask_path]
 condition_list = [
     valid_image,
     initiation,
@@ -241,79 +245,177 @@ condition_list = [
     fatigue,
     overload
 ]
-
+def print_column_counts(df,example=0):
+    row_structure = '|{:^50}|{:^10}|{:^10}|{:^10}|{:^15}|{:^15}|'
+    print(row_structure.format('Column name', 'Nulls','Values','Position','dtype','Example'))
+    i=0
+    for column in df.columns:
+        nas = df[column].isna().sum()
+        col_type = df[column].dtype
+        print(row_structure.format(
+            column,
+            str(nas),
+            str(len(df[column])-nas),
+            str(i),
+            str(col_type),
+            str(df[column].iloc[example])[0:15],
+            ))
+        i+=1
+# %% 
+'''Tidy EP and NADA data'''
 if __name__=="__main__":
     # EP04,5,7 + NASA
     EP04 = pd.read_excel('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/fractography/EP04 (Complete)/EP04 Fractographical Data.xlsx')
     EP05 = pd.read_excel('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/fractography/EP05/EP05 Fractographical Data_cycles_added.xlsx')
     EP07 = pd.read_excel('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/fractography/EP07/EP07-Fractographical Data.xlsx')
     NASA = pd.read_excel('/home/aml334/CSE_MSE_RXF131/staging/mds3/fractography/NASA03/NASA Fractographical Data_Chris-Updated 9_2.xlsx',skiprows=1)
-    output = pd.concat([EP04,EP05,EP07,NASA])
-    output['Sample#'] = output['Sample#'].apply(m)
-    output.insert(0,'Test ID',output['Sample#'] + '-0')
+    EP_NASA_df = pd.concat([EP04,EP05,EP07,NASA])
+    EP_NASA_df['Sample#'] = EP_NASA_df['Sample#'].apply(standardize_sample_num)
     del EP04
     del EP05
     del EP07
     del NASA
-
+    EP_NASA_df = EP_NASA_df[['Sample#','σ (Mpa)','Cycles']]
+    EP_NASA_df = EP_NASA_df.dropna()
+    EP_NASA_df = EP_NASA_df.rename(columns={
+        'Sample#':'sample_id',
+        'σ (Mpa)':'test_stress_Mpa',
+        'Cycles':'cycles'
+    })
+    EP_NASA_df = EP_NASA_df.astype({
+        'sample_id':'string',
+        'test_stress_Mpa':'float',
+        'cycles':'int32'
+    })
+    # Needs to be done later
     process_parameters = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/fractography/variable-process-parameters.csv')
+    EP_NASA_df['scan_power_W'] = EP_NASA_df['sample_id'].apply(lambda row:name_to_power(row,4)).astype('float')
+    EP_NASA_df['scan_velocity_mm_s'] = EP_NASA_df['sample_id'].apply(lambda row: name_to_velocity(row,4)).astype('float')
+    EP_NASA_df['energy_density_J_mm3'] = EP_NASA_df['scan_power_W']/(EP_NASA_df['scan_velocity_mm_s'].apply(lambda x: x*HATCH_SPACING*LAYER_THICKNESS))
+    EP_NASA_df['build_id'] = EP_NASA_df['sample_id'].str.split("-").apply(lambda x: x[0])
+    EP_NASA_df['build_plate_position'] = EP_NASA_df['sample_id'].str.split("-").apply(lambda x: x[1])
+    EP_NASA_df['testing_position'] = EP_NASA_df['sample_id'].str.split("-").apply(lambda x: x[2])
+    del process_parameters 
 
-    output['Load Ratio (R)'] = 0.1
-    output['Scan Power (W)'] = output['Sample#'].apply(lambda row:name_to_power(row,4))
-    output['Scan velocity (mm/s)'] = output['Sample#'].apply(lambda row: name_to_velocity(row,4))
-    output['Retest']=0
-    output.head(3)
-    del name_to_power
-    del name_to_velocity
-    del process_parameters
+    # %%
+    '''Tidying Brett's dataframe'''
     #Brett Spreashsheet
     Brett_spreadsheet = pd.ExcelFile('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/fractography/4-pt Bend Data Master Spreadsheet_exit_8_27_24.xlsx')
-    excel_df = pd.DataFrame()
+    Brett_df = pd.DataFrame()
     for worksheet in Brett_spreadsheet.sheet_names:
         if worksheet not in ['Template','To Test','Retest']:
-            excel_df = pd.concat([excel_df,pd.read_excel(Brett_spreadsheet,worksheet)])
+            Brett_df = pd.concat([Brett_df,pd.read_excel(Brett_spreadsheet,worksheet)])
     del Brett_spreadsheet
+    Brett_df = Brett_df[['Build ID','Build #','Test #','Scan Power (W)','Scan velocity (mm/s)','Retest','σ max initiation (MPa)','Cycles']]
+    Brett_df = Brett_df.rename(columns={
+        'Build ID':'build_id',
+        'Build #':'build_plate_position',
+        'Test #':'testing_position',
+        'Scan Power (W)': 'scan_power_W',
+        'Scan velocity (mm/s)':'scan_velocity_mm_s',
+        'σ max initiation (MPa)':'test_stress_Mpa',
+        'Cycles':'cycles',
+        })
+    #Filtering out NA values
+    Brett_df['testing_position'] = pd.to_numeric(Brett_df['testing_position'], errors='coerce')
+    Brett_df = Brett_df.dropna()
+    Brett_df = Brett_df.astype({
+        'build_id':'string',
+        'build_plate_position':'string',
+        'testing_position':'int32',
+        'test_stress_Mpa':'float',
+        'cycles':'int32'
+    })
+    Brett_df['build_id'] = Brett_df['build_id'].apply(clean_BuildID)
+    Brett_df['sample_id'] = Brett_df['build_id'] + '-'+Brett_df['build_plate_position'].apply(str).apply(lambda x:x.replace('V','').replace('.0','')).replace('O','')+'-'+Brett_df['testing_position'].apply(str).apply(lambda x:x.replace('V','').replace('.0',''))
+    #Filtering out mechanical data from times the sample didn' break (we get no metallography data)
+    Brett_df = Brett_df.reset_index(drop=True)
+    Brett_df = Brett_df.iloc[Brett_df.groupby('sample_id')['Retest'].idxmax()]
+    Brett_df = Brett_df.drop(columns=['Retest'])
+    Brett_df['energy_density_J_mm3'] = Brett_df['scan_power_W']/(Brett_df['scan_velocity_mm_s'].apply(lambda x: x*HATCH_SPACING*LAYER_THICKNESS))
 
-    #Making key
-
-    excel_df['Sample#'] = excel_df['Build ID'].apply(clean_BuildID) + '-'+excel_df['Build #'].apply(str).apply(lambda x:x.replace('V','').replace('.0','')).replace('O','')+'-'+excel_df['Test #'].apply(str).apply(lambda x:x.replace('V','').replace('.0',''))
-    excel_df['Test ID'] = excel_df['Sample#'] +'-'+excel_df['Retest'].apply(str).apply(lambda x:x.replace('V','').replace('.0',''))
-
+    # %%
+    '''Tidying Austin's Data'''
     #Austin's spreedsheet
     Austin_spreadsheet = pd.ExcelFile('/home/aml334/CSE_MSE_RXF131/staging/mds3/fractography/MasterSheet_ULI_Ti6Al4V_Fatigue.xlsx')
-    temp_df = pd.DataFrame()
+    Austin_df = pd.DataFrame()
     for worksheet in ['Fatigue Test Table','K calculation']:
         if 'Fatigue Test Table' in worksheet:
             x = pd.read_excel(Austin_spreadsheet,worksheet,skiprows=1)
-            x['Cycles'] = x['Cycles @ Failure']
+            x['cycles'] = x['Cycles @ Failure']
+            x['test_stress_Mpa'] = x['MPa']
 
         elif 'K calculation' in  worksheet:
             x = pd.read_excel(Austin_spreadsheet,worksheet,skiprows=0)
-        if 'ID' in x.columns:
-            x['Sample#'] = x['ID'].apply(m)
+            x['test_stress_Mpa'] = x['Mpa']
         x = x.loc[:, ~x.columns.str.startswith('Unnamed')]
-        temp_df = pd.concat([temp_df,x])
+        Austin_df = pd.concat([Austin_df,x])
     del x
-
-    excel_df = pd.concat([excel_df,output,temp_df])
-    col = excel_df.pop('Sample#')
-    excel_df.insert(0, 'Sample#', col)
-    #Filter Based on Cycles
-    excel_df = excel_df[excel_df['Cycles'].notna()]
-    excel_df['σ (Mpa)']= excel_df['σ max initiation (MPa)']
-    type_counts = excel_df['Cycles'].apply(type).value_counts()
-
-    print(type_counts)
-    excel_df = excel_df[excel_df['Cycles'].apply(lambda x: isinstance(x, int) or isinstance(x,float))]
-    excel_df['Cycles'] = excel_df['Cycles'].astype(int)
-    type_counts = excel_df['Cycles'].apply(type).value_counts()
-    print(type_counts)
-
-    del col
-    del output
     del Austin_spreadsheet
-    del temp_df
-    # In[12]:
+    #Extracting infromation from spreadsheet
+    Austin_df = Austin_df.reset_index(drop=True)
+    ID_regex = re.compile(r"^(EP\d+|CMU\d+|NASA\d+)-(V?\d+)-(\d)",re.IGNORECASE)
+    result = Austin_df.loc[~Austin_df['ID'].isna(), 'ID'].apply(lambda x: re.search(ID_regex, str(x)) if re.search(ID_regex, str(x)) else None)
+    result = result[~result.isna()]
+    Austin_df['build_id'] = result.apply(lambda x: clean_BuildID(x.group(1)))
+    Austin_df['build_plate_position'] = result.apply(lambda x: x.group(2))
+    Austin_df['testing_position'] = result.apply(lambda x: x.group(3))
+    Austin_df = Austin_df[~Austin_df['build_id'].isna()]
+    Austin_df['sample_id'] = Austin_df['build_id']+"-"+Austin_df['build_plate_position']+"-"+Austin_df["testing_position"]
+    Austin_df = Austin_df[['build_id','build_plate_position','testing_position','sample_id','cycles','test_stress_Mpa']]
+    Austin_df = Austin_df.dropna()
+    Austin_df = Austin_df.astype({
+        'build_id':'string',
+        'build_plate_position':'string',
+        'sample_id':'string',
+        'testing_position':'int32',
+        'test_stress_Mpa':'float',
+        'cycles':'int32'
+    })
+    CMU_master_spreadsheet = pd.ExcelFile('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/Adcock_ULI_Build_Codex (1).xlsx')
+    CMU_NASA_process_parameters_df = pd.DataFrame()
+    for worksheet in ['CMU01','CMU02','CMU03','CMU04','CMU05','CMU07','CMU08','CMU09','CMU10','CMU11','CMU12']:
+        x = pd.read_excel(CMU_master_spreadsheet,worksheet,skiprows=23)
+        x = x[['Unnamed: 0','power','velocity']]
+        x = x.rename(columns={
+            'Unnamed: 0':'build_plate_position',
+            'power': 'scan_power_W',
+            'velocity': 'scan_velocity_mm_s'
+        })
+        x['energy_density_J_mm3'] = x['scan_power_W']/(x['scan_velocity_mm_s'].apply(lambda x: x*HATCH_SPACING*LAYER_THICKNESS))
+        x['build_id'] = clean_BuildID(worksheet)
+        x = x.dropna().reset_index(drop=True)
+        x['build_plate_position'] = x['build_plate_position'].astype(np.int64)
+        CMU_NASA_process_parameters_df = pd.concat([CMU_NASA_process_parameters_df,x])
+    CMU_NASA_process_parameters_df=CMU_NASA_process_parameters_df.dropna().reset_index(drop=True)
+    CMU_NASA_process_parameters_df = CMU_NASA_process_parameters_df.astype({
+            'build_id':'string',
+            'build_plate_position':'string',
+            'scan_power_W':'float',
+            'scan_velocity_mm_s':'float',
+            'energy_density_J_mm3':'float',
+        })
+    Austin_df = pd.merge(Austin_df,CMU_NASA_process_parameters_df,on=['build_id','build_plate_position'])
+    df = pd.concat([Austin_df,Brett_df,EP_NASA_df]).drop_duplicates()
+    df = df.astype({
+        'sample_id':'string',
+        'build_id':'string',
+        'build_plate_position':'string',
+        'testing_position':'int',
+        'scan_power_W':'float',
+        'energy_density_J_mm3':'float',
+        'test_stress_Mpa':'float',
+        'cycles':'int',
+    })
+    df['build_plate_position'] = df['build_plate_position'].str.removesuffix(".0")
+    df = df.drop_duplicates().reset_index(drop=True)
+    print_column_counts(df)
+    del col
+    del EP_NASA_df
+    del Austin_spreadsheet
+    del Austin_df
+    del result
+    # Extracting Image file List
     name = []
     column_dict = {}
     i=0
