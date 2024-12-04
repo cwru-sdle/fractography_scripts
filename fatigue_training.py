@@ -56,16 +56,14 @@ def cleanup():
     dist.destroy_process_group()
 
 combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
-df = combined_df[(pd.notna(combined_df['path_stitched']))&(pd.notna(combined_df['path_fatigue']))]
+df = combined_df[combined_df['image_basename'].apply(lambda x: type(x)==str)] #Drops nas, which are loaded as floats
+df = df.groupby('sample_id')
 x_sup = []
 y_sup = []
-for csv in df['path_stitched']:
-    temp = pd.read_csv(csv)
-    x_sup.append(temp['path'].tolist()[0])
-for csv in df['path_fatigue']:
-    temp = pd.read_csv(csv)
-    y_sup.append(temp['path'].tolist()[0])
-
+for group_string, sample in df:
+    if 'fatigue' in sample['image_class'].value_counts().index and 'full_surface_unmarked' in sample['image_class'].value_counts().index:
+        y_sup.append(sample[(sample['image_class']=='fatigue') & (sample['image_path'].apply(lambda x: '.png' in x))]['image_path'].iloc[0])
+        x_sup.append(sample[(sample['image_class']=='full_surface_unmarked')]['image_path'].iloc[0])
 x_temp = pd.Series(x_sup,name='input')
 y_temp = pd.Series(y_sup,name='output')
 temp_df = pd.concat([x_temp,y_temp],axis=1)
@@ -204,7 +202,7 @@ while not COMPLETE:
                     save_path_csv = args.path+'/loss_figure.csv',
                     subplot_titles=['Loss Figure']
                 )
-                torch.save(segmentor.state_dict(),args.path+'/model_weights.pt')
+                torch.save(segmentor,args.path+'/model_weights.pt')
         if args.local_rank==0:
             df = combined_df[combined_df['Sample#'].str.contains('CMU9') & -combined_df['path_stitched'].isna()]
 
@@ -244,7 +242,7 @@ while not COMPLETE:
         torch.cuda.empty_cache()
         print(f"Error occured\n{e}\nOOM error occured. Retrying with a smaller batch size of {BATCH_SIZE}")
         if BATCH_SIZE==0:
-            print(f"GPU does not ahve enough memory to support this training scheme.")
+            print(f"GPU does not have enough memory to support this training scheme.")
             raise torch.cuda.OutOfMemoryError
 dist.barrier() #Make sure all of them are ready
 dist.destroy_process_group()

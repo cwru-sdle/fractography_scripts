@@ -14,3 +14,4 @@ Organize_data needs to be restructured to make the data tidy. I can still merge 
 9. image_class: string, factor
 10. image_path: string
 11. image_basename: string
+12. points: string ->np.array
