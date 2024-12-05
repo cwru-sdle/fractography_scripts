@@ -120,7 +120,7 @@ setup(rank,world_size)
 COMPLETE=False
 BATCH_SIZE = args.batch_size
 LEARNING_RATE = args.learning_rate * BATCH_SIZE * world_size
-segmentor = attention_unet.attention_unet().to(rank)
+segmentor = attention_unet.attention_unet(dropout_prob=0.3).to(rank)
 # Setting the dataset
 segmentor = torch.nn.parallel.DistributedDataParallel(segmentor)
 train_samp = DistributedSampler(train_ds,rank=rank,shuffle=True)
@@ -204,7 +204,7 @@ while not COMPLETE:
                 )
                 torch.save(segmentor,args.path+'/model_weights.pt')
         if args.local_rank==0:
-            df = combined_df[combined_df['Sample#'].str.contains('CMU9') & -combined_df['path_stitched'].isna()]
+            df = combined_df[combined_df['sample'].str.contains('CMU9') & -combined_df['path_stitched'].isna()]
 
             x_unsup=[]
             only_once=True

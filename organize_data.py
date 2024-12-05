@@ -254,9 +254,8 @@ condition_list = [
     full_surface_unmarked
 ]
 def print_column_counts(df,example=0):
-    row_structure = '|{:^50}|{:^10}|{:^10}|{:^10}|{:^15}|{:^15}|'
-    print(row_structure.format('Column name', 'Nulls','Values','Position','dtype','Example'))
-    i=0
+    row_structure = '|{:^25}|{:^10}|{:^10}|{:^15}|{:^15}|'
+    print(row_structure.format('Column name', 'Nulls','Values','dtype','Example'))
     for column in df.columns:
         nas = df[column].isna().sum()
         col_type = df[column].dtype
@@ -264,11 +263,9 @@ def print_column_counts(df,example=0):
             column,
             str(nas),
             str(len(df[column])-nas),
-            str(i),
             str(col_type),
             str(df[column].iloc[example])[0:15],
             ))
-        i+=1
 # %% 
 '''Tidy EP and NADA data'''
 if __name__=="__main__":
