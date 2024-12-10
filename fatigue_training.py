@@ -104,7 +104,7 @@ train_ds = Multiclass_dataset(
     x_sup=x_sup_train,
     y = y_sup_train,
     initalization_transform=Resize,
-    getitem_transform=blur_affine_trans,
+    getitem_transform=unblur_affine_trans,
     imgs_per_transform=args.imgs_per_transform
 )
 valid_ds = Multiclass_dataset(
