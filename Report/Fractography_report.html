@@ -1,0 +1,2089 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.56">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Anthony Lino">
+<meta name="dcterms.date" content="2024-10-30">
+
+<title>Fatigue Fracture Surfaces</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="Fractography_report_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Fractography_report_files/libs/quarto-html/quarto.js"></script>
+<script src="Fractography_report_files/libs/quarto-html/popper.min.js"></script>
+<script src="Fractography_report_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Fractography_report_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Fractography_report_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Fractography_report_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Fractography_report_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Fractography_report_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Fractography_report_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Fatigue Fracture Surfaces</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Anthony Lino <a href="mailto:aml334@case.edu" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">October 30, 2024</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="abstract" class="level1">
+<h1>Abstract</h1>
+</section>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<section id="fatigue" class="level2">
+<h2 class="anchored" data-anchor-id="fatigue">Fatigue</h2>
+<p>Fatigue is a common failure mechanism for commercial equipment. Fatigue is the phenomenon where cracks will grow as a material is loaded and unloaded, gradually weakening the materials and eventually causing failure well below the expected yield or tensile strength. Any defects can cause a the stress in the material to be concentrated, allowing the experienced stress at specific points to be far greater then the rest of the material. As the material is loaded, the crack will grow, but eventually reach an equilibrium when the material stops being stretched, with the larger the experienced stress, the faster the crack growth. This growth is also not linear, since the larger the crack the greater the concentration and the faster the growth. This feedback loop causes exponential crack growth. Exponential relationships appear linear in log-log plots, so the exponential relationship between crack growth and change in stress concentration factor in a single cycle can be seen in figure 2. As a result of this exponential relationship, the majority of the cycles are spent forming an initial crack from a defect, called crack nucleation, and when the crack is small, called the short crack growth regime. As a result, the shape, which determines the stress concentration factor, and and the defect size, which determines the starting size of the crack, are key determiners of fatigue performance. <img src="Figures/Stress_Concentration_factor.png" class="img-fluid" alt="Stress Concentration Factor"> <img src="Figures/Crack-growth-curve-for-three-crack-propagation-regions.png" class="img-fluid" alt="[1]"></p>
+</section>
+<section id="laser-powder-bed-fusion" class="level2">
+<h2 class="anchored" data-anchor-id="laser-powder-bed-fusion">Laser Powder Bed Fusion</h2>
+<p>Laser Powder Bed Fusion is (LPBF) an emerging manufacturing method which allows for straightforward small batch manufacturing of complex designs. The ease of manufacturing small batches and the high design freedom allows for high performance designs. This makes it particularly well suited for adoption in the Aerospace industry. An additional requirement for Aerospace parts is goog#| code-overflow: wrap fatigue performance since cyclic loading is ubiquitous in Aerospace applications. Two common initiating defects are surface roughness and defects which result from processing, both of which are inherit part of the LPBF process. A rough surface can be polished, but defects can be embedded into the surface, making them significantly harder to heal. The number of defects can be reduced by optimizing processing parameters. Fatigue, because it is time dependent, is inherently more difficult to study than time independent properties, such as tensile properties. As a result, most studies focusing on process parameter optimization rely on these easier tests, leaving a gap in the literature for studies on fatigue optimization. A study in Professor Lewandowski’s lab addressed this by tested the impact of different processing parameters on the fatigue properties. After fracture, the fractured surfaces were imaged under a microscope, revealing the impact of different defects.</p>
+</section>
+<section id="quantitative-fractography" class="level2">
+<h2 class="anchored" data-anchor-id="quantitative-fractography">Quantitative Fractography</h2>
+<p>Fractography is the study of fracture surfaces. This is a largely qualitative field, but there is a emerging field of quantitative fractography which relies on segmenting these images, and then extracting features from these masks. The Lewandowski lab explored the use of quantitative fractography for these images by performing 4 segmentation tasks:</p>
+<ol type="1">
+<li>Segmenting every defect from the fracture surface</li>
+<li>Segmenting only the initiating defect from the fracture surface</li>
+<li>Segmenting the region of fatigue crack growth</li>
+<li>Segmenting the region of overload While significant efforts were made, this is a time consuming process, it can take upwards of 4 hours for a single sample, making use of the entire dataset unfeasible. The existing manually annotated data can be used to train machine learning models to perform this segmentation task on the remainder of the data, allowing conclusions to be drawn on the remainder of the data. This is the primary task done in the remainder of this data.</li>
+</ol>
+</section>
+</section>
+<section id="data-science-methods" class="level1">
+<h1>Data Science Methods</h1>
+<p>Machine learning is used to segment defects and interesting characteristics from the images. Hypothesis testing is used to show the correlation between the extracted defects and the resulting mechanical properties. The following libraries are needed for python and R.</p>
+<ul>
+<li>os - used for reading paths</li>
+<li>sys - used for adding folders to path</li>
+<li>cv2 - the most powerful library for image processing currently available in terms of both performance and capability</li>
+<li>numpy - allows images to be eﬀiciently worked with as arrays. The foundation for cv2</li>
+<li>pandas - the most popular python library for working with dataframes</li>
+<li>math - used for mathematical functions</li>
+<li>random - used to create random variables</li>
+<li>matplotlib.pyplot - most popular plotting language</li>
+</ul>
+<section id="loading-packages" class="level3">
+<h3 class="anchored" data-anchor-id="loading-packages">Loading Packages</h3>
+<pre class="{python}"><code>#| echo: true
+import os
+import sys
+import cv2
+import numpy as np
+import pandas as pd
+import math
+import random
+import matplotlib.pyplot as plt
+import re
+import datetime
+import PIL</code></pre>
+<p>In addition to these package, the recent release of Meta’s foundation models segment anything and segment anything 2 will be explored for use in characterizing the unsegmented initiating defects from high resolution images. <span class="citation" data-cites="kirillov_segment_2023"><a href="#ref-kirillov_segment_2023" role="doc-biblioref">[2]</a></span> <span class="citation" data-cites="ravi2024sam2"><a href="#ref-ravi2024sam2" role="doc-biblioref">[3]</a></span></p>
+</section>
+</section>
+<section id="exploratory-data-analysis" class="level1">
+<h1>Exploratory Data Analysis</h1>
+<section id="explanation-of-your-data-set" class="level2">
+<h2 class="anchored" data-anchor-id="explanation-of-your-data-set">Explanation of your data set</h2>
+<p>The dataset mostly consists of unorganized images in 2 folders, and the numerical data is stored in a handful of spreadsheets. The dataframe was created in two parts: 1) The image dataframe, which contains the path to the images and 2) the numerical dataframe where are spreadsheets were merged. The id used to merge these dataframes is the Sample#, which was extracted from the image path using a regex and was cleaned from the existing Sample# column in the numerical spreadsheets. For the image dataframes, different categories were made, and each has a corresponding function which takes a file path as input an returns true for whether the path leads to an image of that category. Data validation is done here to ensure that the categories are well defined. Also, since some categories can have multiple images per Sample#, each path actually points to a csv, which itself can contain multiple image paths.</p>
+</section>
+<section id="data-cleaning" class="level2">
+<h2 class="anchored" data-anchor-id="data-cleaning">Data Cleaning</h2>
+<p>Data cleaning was an iterative process, with the organize data script being run to create a dataframe, then the results analyzed and verified with a jupyter notebook. The organize data script is in it’s own section, and the smaller chucks used to analyze the results are below it. Several sections are not fully cleaned, with the majority of the effort going to the fatigue and overload region, since they are the easiest to verify and should be the simplest task for the model since they are rather large.</p>
+<section id="organize-data" class="level3">
+<h3 class="anchored" data-anchor-id="organize-data">Organize data</h3>
+<pre class="{python #organize_data}"><code>#| code-overflow: wrap
+STITCHED_THRESHOLD = 3000000
+UPPER_RED_THRESHOLD = 1000
+LOWER_RED_THRESHOLD = 20
+
+check = re.compile(r'''
+    ^
+    (?:x)?
+    (?:\d+)?
+    (?:[a-b])?
+    [-]?
+    (?:Copy\ of\ |Overview|_STD_ETD_|Initiation)?  # Optional prefixes
+    [-]?
+    [\d]?
+    [-]?
+    [x]?
+    (?:\d+)?
+    [-]?
+    # Start with EP, NASA, or CMU (case insensitive)
+    (EP|NASA|CMU)                                  
+    [-_]?                                          # Optional separator
+    # Number or O followed by number
+    (\d+|O\d+)                                     
+    [-_]?                                        # Optional separator
+    V?
+    ([E\d]+|\d+)                                   # Version number
+    [-_]?                                          # Optional separator
+    (\d+)?                                         # Optional additional number
+    (?:_MARKED)?                                   # Optional '_MARKED' suffix
+    # Any characters in between (greedy by default)
+    (.*)?                                          
+    \.(png|tif|tiff|jpg)$                          # File extension
+    ''', re.VERBOSE | re.IGNORECASE)
+def print_dataframe(df):
+    row_structure = '|{:^50}|{:^10}|{:^10}|{:^15}|'
+    print(row_structure.format('Column name', 'Nulls','Values','Position'))
+    i=0# Any characters in between (greedy by default)
+    for column in df.columns:
+        nas = df[colum# Any characters in between (greedy by default)n].isna().sum()
+        print(row_structure.format(column,str(nas),str(len(df[column])-nas),
+        str(i)))
+        i+=1
+def log_message(file_path, message):
+    # Get the current date and time
+    now = datetime.datetime.now()
+    timestamp = now.strftime('%Y-%m-%d %H:%M:%S')
+
+    # Create the log entry
+    log_entry = f'[{timestamp}] {message}\n'
+
+    # Append the log entry to the file
+    with open(file_path, 'a') as file:
+        file.write(log_entry)
+def clean_Sample_num(x):
+    try:
+        m_f = re.match(r'^([A-Z]+)(\d+)-[V]?(\d+|E\d+)[-]?(\d+)?',x)
+    except TypeError:
+        return None
+    if m_f:
+        if(m_f.lastindex==4):
+            return m_f.group(1)+m_f.group(2).lstrip('0').lstrip('O')+'-'+
+          m_f.group(3)+'-'+str(int(m_f.group(4)))
+        else:
+            return m_f.group(1)+m_f.group(2).lstrip('0').lstrip('O')+'-'+
+          m_f.group(3)+'-'+str('1')
+    else:
+        return None
+def name_to_power(name:str, position:int):
+    for idx, option in enumerate(process_parameters['Test ID']):
+        if(option[2] == name[position]):
+            return process_parameters['P (W)'][idx]
+def name_to_velocity(name:str,position:int):
+    for idx, option in enumerate(process_parameters['Test ID']):
+        if(option[2] == name[position]):
+            return process_parameters['V (mm/s)'][idx]
+def clean_name(input):
+    return input.astype(str).str.replace('0','').str.rstrip('.')
+def clean_BuildID(input):
+    try:
+        match = re.match(r'([A-Z]+)(\d+)',input,re.IGNORECASE)
+        if match:
+            prefix = match.group(1).lstrip('O')
+            numeric_part = match.group(2).lstrip('0')
+            return prefix + numeric_part
+    except TypeError:
+        print(input)
+#Adds File if Condition(path) return True
+def recursive_search(condition,path:str, file_list:list):
+    if os.path.isdir(path):
+        for path_loop in os.listdir(path):
+            recursive_search(condition,os.path.join(path,path_loop),file_list)
+    else:
+        if(condition(path)):
+            file_list.append(path)
+    return file_list
+#Functions used for Validation
+def size(image_path):
+    img = cv2.imread(image_path)
+    try:
+        return img.shape[0] * img.shape[1]
+    except AttributeEr# Any characters in between (greedy by default)ror:
+        print('File is corrupted: '+image_path)
+        return -1
+def size_red(image_path):
+   img = cv2.imread(image_path)
+   try:
+        #Convert the image from BGR to HSV color space
+        hsv_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        # Any characters in between (greedy by default)
+
+        # Define the lower and upper bounds for the red color in HSV space
+        lower_red_1 = np.array([0, 50, 50])
+        upper_red_1 = np.array([10, 255, 255])
+        # Any characters in between (greedy by default)
+        lower_red_2 = np.array([170, 50, 50])
+        upper_red_2 = np.array([180, 255, 255])
+
+        # Create masks for the red color ranges
+        mask1 = cv2.inRange(hsv_image, lower_red_1, upper_red_1)
+        mask2 = cv2.in# Any characters in between (greedy by default)Range(hsv_image, lower_red_2, upper_red_2)
+
+        # Combine the masks
+        red_mask = mask1 + mask2
+
+        # Count the number of red pixels
+        red_pixels = cv2.countNonZero(red_mask)
+
+        return(red_pixels)
+   except AttributeError:
+       print('File is corrupted: '+image_path)
+       return -1
+def is_greyscale(image_path):
+    img = cv2.imread(image_path)
+    if len(img.shape) &lt; 3:
+        return True
+    if img.shape[2] == 1:
+        return True
+    # If the image is color, check if all channels are equal
+    if np.allclose(img[:, :, 0], img[:, :, 1]) and np.allclose(img[:, :, 1], 
+    img[:, :, 2]):
+        return True
+    return False
+
+def is_binary(path):
+    try:
+        img = PIL.Image.open(path)
+        img = img.convert('L')
+        img_data = np.array(img)
+        unique_vals = np.unique(img_data)
+        if len(unique_vals) == 2 and set(unique_vals) == {0, 255}:
+            return True
+        else:
+            return False
+    except PIL.UnidentifiedImageError:
+        return False    
+
+def is_8bit(path):
+    try:
+        img = PIL.Image.open(path)
+        img = img.convert('L')
+        img_data = np.array(img)
+        if img_data.min() &lt; 0 or img_data.max() &gt; 255:
+            return False
+        else:
+            return True
+    except PIL.UnidentifiedImageError:
+        return False
+
+#Different columns that would be valuable to have
+def valid_image(path):
+    for i in ['.csv','.hdr','.xlsx']:
+        if i in path:
+            return False
+    if is_8bit(path):
+        return True
+    else:
+        return FalseSegment anything will be used [@kirillov_segment_2023]
+
+def marked(path):# Any characters in between (greedy by default)
+    if 'marked' in path.lower() and valid_image(path) and 
+    not is_greyscale(path):
+        return True
+    else:
+        return False
+def initiation(path):
+    if ('_001' in path or 'initiation' in path.lower()) and valid_image(path)
+    and size(path)&lt;STITCHED_THRESHOLD:
+        return True
+    else:
+        return False
+def stitched(path):
+    if ('stitched' in path.lower() or 'composite' in path.lower()) and
+    valid_image(path) and size(path) &gt;STITCHED_THRESHOLD:
+        return True
+    else:
+        return False
+def full_surface_marked(path):
+    if stitched(path) and (not is_greyscale(path)) and
+    (size_red(path)&gt;UPPER_RED_THRESHOLD):
+        return True
+    else:
+        return False
+def initation_marked_stitched(path):
+    if stitched(path) and (not is_greyscale(path)) and
+    (LOWER_RED_THRESHOLD&lt;size_red(path)&lt;UPPER_RED_THRESHOLD):
+        return True
+    else:
+        return False
+def fatigue(path):
+    if 'fatigue' in path.lower() and valid_image(path) and is_binary(path):
+        return True
+    else:
+        return False
+def overload(path):
+    if 'overload' in path.lower() and valid_image(path) and is_binary(path):
+        return True
+    else:
+        return False
+def exclude(input):
+    conditions = ['.hdr', '.csv','.info','.xlsx','.pptx','.s0001','.zip',
+    '.model']
+    for condition in conditions:
+        if condition in input: return True
+    return False
+
+def check_regex_basename(dict_to_search,search_function, exclude_conditions):
+    i=0
+    for key in dict_to_search:
+        for field in dict_to_search[key]:
+            basename = field.split('/')[-1]
+            if not search_function(basename) and not exclude(basename):
+                print(basename)
+                i+=1
+        print('Unselected files: '+str(i))
+def regex_basename(pattern):
+    match = re.search(check,pattern)
+    if(match):
+        type_func = clean_BuildID(match.group(1)+match.group(2))
+        series_func = match.group(3).lstrip("0")
+        if match.group(4):
+            posit_idx_func = match.group(4).lstrip("0")
+        else:
+            posit_idx_func = None
+        return type_func, series_func,posit_idx_func
+    else:
+        return None
+LOG_FILE = '/home/aml334/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/' +
+'fractography/combined_df_log.txt'
+MESSAGE = 'Added lower threshold for initation_marked_stitched'
+
+manuel_mask_path = '/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/' +
+'keyence-fractography/manuel_mask'
+fractography_path = '# Any characters in between (greedy by default)/mnt/vstor/CSE_MSE_RXF131/staging/mds3/fractography'
+csv_dir = "/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/"+
+"Sample#csvs"
+path_list = [fractography_path,manuel_mask_path]
+condition_list = [
+    valid_image,
+    initiation,
+    stitched,
+    full_surface_marked,
+    initation_marked_stitched,
+    fatigue,# Any characters in between (greedy by default)
+    overload
+]
+
+if __name__=="__main__":
+    # EP04,5,7 + NASA
+    EP04 = pd.read_excel('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/'+
+    'fractography/EP04 (Complete)/EP04 Fractographical Data.xlsx')
+    EP05 = pd.read_excel('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/'+
+    'fractography/EP05/EP05 Fractographical Data_cycles_added.xlsx')
+    EP07 = pd.read_excel('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/'+
+    'fractography/EP07/EP07-Fractographical Data.xlsx')
+    NASA = pd.read_excel('/home/aml334/CSE_MSE_RXF131/staging/mds3/'+
+    'fractography/NASA03/NASA Fractographical Data_Chris-Updated 9_2.xlsx',
+    skiprows=1)
+    output = pd.concat([EP04,EP05,EP07,NASA])
+    output['Sample#'] = output['Sample#'].apply(clean_Sample_num)
+    output.insert(0,'Test ID',output['Sample#'] + '-0')
+    del EP04
+    del EP05
+    del EP07
+    del NASA
+
+    process_parameters =pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/'+
+    'fractography/variable-process-parameters.csv')
+
+    output['Load Ratio (R)'] = 0.1
+    output['Scan Power (W)'] = 
+    output['Sample#'].apply(lambda row:name_to_power(row,4))
+    output['Scan velocity (mm/s)'] = output['Sample#'].apply(
+      lambda row: name_to_velocity(row,4))
+    output['Retest']=0
+    output.head(3)
+    del name_to_power
+    del name_to_velocity
+    del process_parameters
+
+    #Brett Spreashsheet
+    Brett_spreadsheet =pd.ExcelFile('/mnt/vstor/CSE_MSE_RXF131/'+
+    'staging/mds3/fractography/4-pt Bend Data Master '+
+    'Spreadsheet_exit_8_27_24.xlsx')
+    excel_df = pd.DataFrame()
+    for worksheet in Brett_spreadsheet.sheet_names:
+        if worksheet not in ['Template','To Test','Retest']:
+            excel_df = pd.concat([excel_df,
+            pd.read_excel(Brett_spreadsheet,worksheet)])
+    del Brett_spreadsheet
+
+    #Making key
+    excel_df['Sample#'] = excel_df['Build ID'].apply(clean_BuildID) + '-'+
+    excel_df['Build #'].apply(str).apply(lambda x:x.replace('V','').replace(
+      '.0','')).replace('O','')+'-'+
+    excel_df['Test #'].apply(str).apply(
+      lambda x:x.replace('V','').replace('.0',''))
+    excel_df['Test ID'] = excel_df['Sample#']+
+    '-'+excel_df['Retest'].apply(str).apply(
+      lambda x:x.replace('V','').replace('.0',''))
+
+    #Austin's spreedsheet
+    Austin_spreadsheet =pd.ExcelFile('/home/aml334/CSE_MSE_RXF131/'+
+    'staging/mds3/fractography/MasterSheet_ULI_Ti6Al4V_Fatigue.xlsx')
+    temp_df = pd.DataFrame()
+    for worksheet in ['Fatigue Test Table','K calculation']:
+        if 'Fatigue Test Table' in worksheet:
+            x = pd.read_excel(Austin_spreadsheet,worksheet,skiprows=1)
+            x['Cycles'] = x['Cycles @ Failure']
+
+        elif 'K calculation' in  worksheet:
+            x = pd.read_excel(Austin_spreadsheet,worksheet,skiprows=0)
+        if 'ID' in x.columns:
+            x['Sample#'] = x['ID'].apply(m)
+        x = x.loc[:, ~x.columns.str.startswith('Unnamed')]
+        temp_df = pd.concat([temp_df,x])
+    del x
+
+    excel_df = pd.concat([excel_df,output,temp_df])
+    col = excel_df.pop('Sample#')
+    excel_df.insert(0, 'Sample#', col)
+    #Filter Based on Cycles
+    excel_df = excel_df[excel_df['Cycles'].notna()]
+    excel_df['σ (Mpa)']= excel_df['σ max initiation (MPa)']
+    type_counts = excel_df['Cycles'].apply(type).value_counts()
+# Any characters in between (greedy by default)
+    print(type_counts)
+    excel_df = excel_df[excel_df['Cycles'].apply(lambda x: isinstance(x, int) 
+    or isinstance(x,float))]
+    excel_df['Cycles'] = excel_df['Cycles'].astype(int)
+    type_counts = excel_df['Cycles'].apply(type).value_counts()
+    print(type_counts)
+
+    del col
+    del output
+    del Austin_spreadsheet
+    del temp_df
+    # In[12]:
+    name = []
+    column_dict = {}
+    i=0
+    column_list = []
+    for column in condition_list:
+        temp_list = []
+        for top_folder in path_list:
+            temp_list.extend(recursive_search(
+                    column,
+                    top_folder,
+                    temp_list
+                )
+            )# Any characters in between (greedy by default)
+        name.append((column.__name__,len(temp_list)))
+        column_dict[name[i][0]] = temp_list
+        del temp_list
+        print(str(name[i]) +f'\tPosition: {i}')
+        i+=1
+
+    # In[17]:
+    # In[17]:
+    check = re.compile(r'''
+        ^
+        (?:x)?
+        (?:\d+)?
+        (?:[a-b])?
+        [-]?
+        (?:Copy\ of\ |Overview|_STD_ETD_|Initiation)?  # Optional prefixes
+        [-]?
+        [\d]?
+        [-]?
+        [x]?
+        (?:\d+)?
+        [-]?
+        (EP|NASA|CMU)                                  
+        # Start with EP, NASA, or CMU (case insensitive)
+        [-_]?                                          # Optional separator
+        (\d+|O\d+)                                     
+        # Number or O followed by number
+        [-_]?                                        # Optional separator
+        V?
+        ([E\d]+|\d+)                                   # Version number
+        [-_]?                                          # Optional separator
+        (\d+)?                                         
+        # Optional additional number
+        (?:_MARKED)?                                   
+        # Optional '_MARKED' suffix
+        (.*)?                                          
+        # Any characters in between (greedy by default)
+        \.(png|tif|tiff|jpg)$                          # File extension
+        ''', re.VERBOSE | re.IGNORECASE)
+    def regex_basename(pattern):
+        match = re.search(check,pattern)
+        if(match):
+            type_func = clean_BuildID(match.group(1)+match.group(2))
+            series_func = match.group(3).lstrip("0")
+            if match.group(4):
+                posit_idx_func = match.group(4).lstrip("0")
+            else:# Any characters in between (greedy by default)
+                posit_idx_func = None
+            return type_func, series_func,posit_idx_func
+        else:
+            return None
+
+    def exclude(input):
+        conditions = ['.hdr', '.csv','.info','.xlsx','.info','.pptx',
+        '.s0001','.zip','.model']
+        for condition in conditions:
+            if condition in input: return True
+        return False
+
+    def check_regex_basename(dict_to_search,search_function, exclude_conditions):
+        i=0
+        for key in dict_to_search:
+            for field in dict_to_search[key]:
+                basename = field.split('/')[-1]
+                if not search_function(basename) and not exclude(basename):
+                    print(basename)
+                    i+=1
+        print('Unselected files: '+str(i))
+        # In[17]:
+    check = re.compile(r'''
+        ^
+        (?:x)?
+        (?:\d+)?
+        (?:[a-b])?
+        [-]?
+        (?:Copy\ of\ |Overview|_STD_ETD_|Initiation)?  # Optional prefixes
+        [-]?
+        [\d]?
+        [-]?
+        [x]?
+        (?:\d+)?
+        [-]?
+        (EP|NASA|CMU)                                  
+        # Start with EP, NASA, or CMU (case insensitive)
+        [-_]?                                          # Optional separator
+        (\d+|O\d+)                                     
+        # Number or O followed by number
+        [-_]?                                        # Optional separator
+        V?
+        ([E\d]+|\d+)                                   # Version number
+        [-_]?                                          # Optional separator
+        (\d+)?                                         
+        # Optional additional number
+        (?:_MARKED)?                                   
+        # Optional '_MARKED' suffix
+        (.*)?                                          
+        # Any characters in between (greedy by default)
+        \.(png|tif|tiff|jpg)$                          # File extension
+        ''', re.VERBOSE | re.IGNORECASE)
+    def regex_basename(pattern):
+        match = re.search(check,pattern)
+        if(match):
+            type_func = clean_BuildID(match.group(1)+match.group(2))
+            series_func = match.group(3).lstrip("0")
+            if match.group(4):
+                posit_idx_func = match.group(4).lstrip("0")
+            else:
+                posit_idx_func = None
+            return type_func, series_func,posit_idx_func
+        else:
+            return None
+
+    def exclude(input):
+        conditions = ['.hdr', '.csv','.info','.xlsx','.info','.pptx','.s0001',
+        '.zip','.model']
+        for condition in conditions:
+            if condition in input: return True
+        return False
+
+    def check_regex_basename(dict_to_search,search_function, exclude_conditions):
+        i=0
+        for key in dict_to_search:
+            for field in dict_to_search[key]:
+                basename = field.split('/')[-1]
+                if no# Any charadef print_column_counts(df,example=0):
+    row_structure = '|{:^50}|{:^10}|{:^10}|{:^10}|{:^15}|'
+    print(row_structure.format('Column name', 'Nulls','Values','Position','Example'))
+    i=0
+    for column in df.columns:
+        nas = df[column].isna().sum()
+        print(row_structure.format(column,str(nas),str(len(df[column])-nas),str(i),str(df[column].iloc[example])[0:15]))
+        i+=1
+print_column_counts(combined_df)cters in between (greedy by default)t search_function(basename) and not exclude(basename):
+                    print(basename)
+                    i+=1
+        print('Unselected files: '+str(i))
+        check_regex_basename(column_dict,regex_basename, exclude)
+    # %%
+    dataframe_list = []
+    for i, key in enumerate(column_dict):
+        type_column = []
+        series_column = []
+        posit_idx_column = []
+        basename = []
+        Sample_num = []
+        path_column = Segment anything will be used [@kirillov_segment_2023]
+[]
+        for j, field in enumerate(column_dict[key]):
+            if regex_basename(field.split('/')[-1]):
+                path_column.append(field)
+                type_inst, series_inst, posit_idx_inst = 
+                regex_basename(field.split('/')[-1])
+                type_column.append(type_inst)
+                series_column.append(series_inst)
+                posit_idx_column.append(posit_idx_inst)
+                basename.append(field.split('/')[-1])
+                if posit_idx_iSegment anything will be used [@kirillov_segment_2023]
+nst == None:
+                    Sample_num.append(type_inst.upper()+'-'+
+                    str(series_inst)+'-1')
+                else:
+                    Sample_num.append(type_inst.upper()+'-'+str(series_inst)+
+                    '-'+str(posit_idx_inst))
+        path_column = pd.Series(path_column,name='path')
+        type_column = pd.Series(type_column, name='Build ID')
+        series_column = pd.Series(series_column,name='Build #')
+        posit_idx_column = pd.Series(posit_idx_column,name='Test #')
+        basename_column = pd.Series(basename,name='basename')
+        Sample_num_column= pd.Series(Sample_num, name = 'Sample#')
+        dataframe_list.append(
+            pd.concat(
+                [
+                    Sample_num_column,
+                    path_column,
+                    type_column,
+                    series_column,
+                    posit_idx_column,
+                    basename_column,
+                ],
+                axis=1
+            )
+        )
+        
+
+    if not os.path.exists(csv_dir):
+        os.makedirs(csv_dir)
+
+    for i, df in enumerate(dataframe_list):
+        unique_samples = df['Sample#'].drop_duplicates()
+        csv_paths = []
+        for sample in unique_samples:
+            print(sample)
+            sample_df = df[df['Sample#'] == sample]
+            print(sample_df)
+            csv_path = csv_dir+f'/{sample}_'+name[i][0]+'.csv'
+            sample_df.to_csv(csv_path, index=False)
+            csv_paths.append(csv_path)
+        sample_column = pd.Series(unique_samples, name="Sample#")
+        path_column = pd.Series(csv_paths, name="path")
+        new_df = pd.concat([sample_column.reset_index(drop=True),
+        path_column.reset_index(drop=True)],axis=1)
+        dataframe_list[i] = new_df
+
+    # %%
+    combined_df = excel_df[-excel_df['Sample#'].isna()]
+    # all should have a key column
+    for i, dataframe in enumerate(dataframe_list):
+        # print(combined_df['Sample#']
+        )# Any characters in between (greedy by default)
+        # print(dataframe['Sample#'])
+        # for j in dataframe['path']:
+        # # Any characters in between (greedy by default)
+        #     print(j[-30:])
+        #     pass
+        try:
+            combined_df = pd.merge(combined_df,dataframe,on='Sample#',
+            suffixes=('',f'_{name[i][0]}'),
+            how='outer').drop_duplicates().sort_values(by='Retest',
+            ascending=False).drop_duplicates('Sample#')
+        except Exception as e:
+            print(e)
+    combined_df.rename(columns={'path':'path_'+name[0][0]},inplace=True)
+    combined_df.to_cs# Any characters in between (greedy by default)v('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/'+
+    'fractography/combined_df.csv')
+    log_message(LOG_FILE,str(len(combined_df))+' :'+MESSAGE)
+    row_structure = '|{:^50}|{:^10}|{:^10}|{:^15}|'
+    print(row_structure.format('Column name', 'Nulls','Values','Position'))
+    i=0
+    for column in df.columns:
+        nas = df[column].isna().sum()
+        print(row_structure.format(column,str(nas),str(len(df[column])-nas),
+        str(i)))
+        log_message(LOG_FILE,str(row_structure.format(column,str(nas),
+        str(len(combineSegment anything will be used [@kirillov_segment_2023]
+d_df[column])-nas),str(i))))
+        i+=1
+    # for m, i in combined_df.iterrows():
+    #     if(isinstance(i['path_overload'],str)):
+    #         print(i['Sample#'])
+    #         print(i['path_overload'])
+
+else:
+    print(__name__+' not being run')
+</code></pre>
+</section>
+<section id="print-data-counts" class="level3">
+<h3 class="anchored" data-anchor-id="print-data-counts">Print Data Counts</h3>
+<p>The below data shows which columns are most common. The most complete columns are Sample#, since that was used to merge the data. The images correspond to the ammount of available data.</p>
+<pre class="{python}"><code>#| echo: true
+#| output: true
+combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/'+
+'AdvManu/fractography/combined_df.csv')
+
+def print_column_counts(df,example=0):
+    row_structure = '|{:^50}|{:^10}|{:^10}|{:^10}|{:^15}|'
+    print(row_structure.format('Column name', 'Nulls','Values',
+    'Position','Example'))
+    i=0
+    for column in df.columns:
+        nas = df[column].isna().sum()
+        print(row_structure.format(column,str(nas),str(len(df[column])-nas),
+        str(i),str(df[column].iloc[example])[0:15]))
+        i+=1
+print_column_counts(combined_df)</code></pre>
+</section>
+<section id="visualize-pv-surface" class="level3">
+<h3 class="anchored" data-anchor-id="visualize-pv-surface">Visualize PV surface</h3>
+<pre class="{python}"><code>#| echo: true
+#| output: true
+# Lets try to plot the values on PV surface
+fig = plt.figure()
+ax = fig.add_subplot(projection='3d')
+only_one = True
+for name, group in combined_df.groupby(['σ (Mpa)']):
+    if len(group)&gt;= 60 and only_one:
+        only_one=False
+        ax.scatter(
+          group['Scan Power (W)'],
+          group['Scan velocity (mm/s)'],
+          group['Cycles'])
+        print(group['σ (Mpa)'].iloc[0])
+ax.set_xlabel('Scan Power (W)')
+ax.set_ylabel('Scan velocity (mm/s)')
+ax.set_zlabel('Cycles')
+plt.show()</code></pre>
+</section>
+</section>
+</section>
+<section id="citations" class="level1">
+
+<!-- -->
+
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">Citations</h2><div id="refs" class="references csl-bib-body" data-entry-spacing="0" role="list">
+<div id="ref-Bang2022" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[1] </div><div class="csl-right-inline">D. Bang and A. Ince, <span>“Integration of a peridynamic fatigue model with two-parameter crack driving force,”</span> <em>Engineering with Computers</em>, vol. 38, Jun. 2022, doi: <a href="https://doi.org/10.1007/s00366-022-01619-4">10.1007/s00366-022-01619-4</a>.</div>
+</div>
+<div id="ref-kirillov_segment_2023" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[2] </div><div class="csl-right-inline">A. Kirillov <em>et al.</em>, <span>“Segment <span>Anything</span>.”</span> arXiv, 2023. doi: <a href="https://doi.org/10.48550/ARXIV.2304.02643">10.48550/ARXIV.2304.02643</a>.</div>
+</div>
+<div id="ref-ravi2024sam2" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[3] </div><div class="csl-right-inline">N. Ravi <em>et al.</em>, <span>“SAM 2: Segment anything in images and videos,”</span> <em>arXiv preprint arXiv:2408.00714</em>, 2024, Available: <a href="https://arxiv.org/abs/2408.00714">https://arxiv.org/abs/2408.00714</a></div>
+</div>
+</div></section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+  const viewSource = window.document.getElementById('quarto-view-source') ||
+                     window.document.getElementById('quarto-code-tools-source');
+  if (viewSource) {
+    const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+    viewSource.addEventListener("click", function(e) {
+      if (sourceUrl) {
+        // rstudio viewer pane
+        if (/\bcapabilities=\b/.test(window.location)) {
+          window.open(sourceUrl);
+        } else {
+          window.location.href = sourceUrl;
+        }
+      } else {
+        const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+        modal.show();
+      }
+      return false;
+    });
+  }
+  function toggleCodeHandler(show) {
+    return function(e) {
+      const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+      for (let i=0; i<detailsSrc.length; i++) {
+        const details = detailsSrc[i].parentElement;
+        if (show) {
+          details.open = true;
+        } else {
+          details.removeAttribute("open");
+        }
+      }
+      const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+      const fromCls = show ? "hidden" : "unhidden";
+      const toCls = show ? "unhidden" : "hidden";
+      for (let i=0; i<cellCodeDivs.length; i++) {
+        const codeDiv = cellCodeDivs[i];
+        if (codeDiv.classList.contains(fromCls)) {
+          codeDiv.classList.remove(fromCls);
+          codeDiv.classList.add(toCls);
+        } 
+      }
+      return false;
+    }
+  }
+  const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+  if (hideAllCode) {
+    hideAllCode.addEventListener("click", toggleCodeHandler(false));
+  }
+  const showAllCode = window.document.getElementById("quarto-show-all-code");
+  if (showAllCode) {
+    showAllCode.addEventListener("click", toggleCodeHandler(true));
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="sourceCode" id="cb5" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> Fatigue Fracture Surfaces</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> 2024-10-30</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">    name: "Anthony Lino"</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">    email: aml334@case.edu</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">    corresponding: true</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: true</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="an">bibliography:</span><span class="co"> references.bib</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="an">csl:</span><span class="co"> ieee.csl</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="an">css:</span><span class="co"> style.css</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> ir</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="fu"># Abstract</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="fu"># Introduction</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="fu">## Fatigue</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>Fatigue is a common failure mechanism for commercial equipment. Fatigue is the phenomenon where cracks will grow as a material is loaded and unloaded, gradually weakening the materials and eventually causing failure well below the expected yield or tensile strength. Any defects can cause a the stress in the material to be concentrated, allowing the experienced stress at specific points to be far greater then the rest of the material. As the material is loaded, the crack will grow, but eventually reach an equilibrium when the material stops being stretched, with the larger the experienced stress, the faster the crack growth. This growth is also not linear, since the larger the crack the greater the concentration and the faster the growth. This feedback loop causes exponential crack growth. Exponential relationships appear linear in log-log plots, so the exponential relationship between crack growth and change in stress concentration factor in a single cycle can be seen in figure 2. As a result of this exponential relationship, the majority of the cycles are spent forming an initial crack from a defect, called crack nucleation, and when the crack is small, called the short crack growth regime. As a result, the shape, which determines the stress concentration factor, and and the defect size, which determines the starting size of the crack, are key determiners of fatigue performance.</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="al">![Stress Concentration Factor](Figures/Stress_Concentration_factor.png)</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="al">![@Bang2022](Figures/Crack-growth-curve-for-three-crack-propagation-regions.png)</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="fu">## Laser Powder Bed Fusion</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>Laser Powder Bed Fusion is (LPBF)  an emerging manufacturing method which allows for straightforward small batch manufacturing of complex designs. The ease of manufacturing small batches and the high design freedom allows for high performance designs. This makes it particularly well suited for adoption in the Aerospace industry. An additional requirement for Aerospace parts is goog#| code-overflow: wrap</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a> fatigue performance since cyclic loading is ubiquitous in Aerospace applications. Two common initiating defects are surface roughness and defects which result from processing, both of which are inherit part of the LPBF process. A rough surface can be polished, but defects can be embedded into the surface, making them significantly harder to heal. The number of defects can be reduced by optimizing processing parameters. Fatigue, because it is time dependent, is inherently more difficult to study than time independent properties, such as tensile properties. As a result, most studies focusing on process parameter optimization rely on these easier tests, leaving a gap in the literature for studies on fatigue optimization. A study in Professor Lewandowski’s lab addressed this by tested the impact of different processing parameters on the fatigue properties. After fracture, the fractured surfaces were imaged under a microscope, revealing the impact of different defects.</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="fu">## Quantitative Fractography</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>Fractography is the study of fracture surfaces. This is a largely qualitative field, but there is a emerging field of quantitative fractography which relies on segmenting these images, and then extracting features from these masks. The Lewandowski lab explored the use of quantitative fractography for these images by performing 4 segmentation tasks:</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Segmenting every defect from the fracture surface</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Segmenting only the initiating defect from the fracture surface</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Segmenting the region of fatigue crack growth</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Segmenting the region of overload </span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>While significant efforts were made, this is a time consuming process, it can take upwards of 4 hours for a single sample, making use of the entire dataset unfeasible. The existing manually annotated data can be used to train machine learning models to perform this segmentation task on the remainder of the data, allowing conclusions to be drawn on the remainder of the data. This is the primary task done in the remainder of this data.</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="fu"># Data Science Methods</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>Machine learning is used to segment defects and interesting characteristics from the images.</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>Hypothesis testing is used to show the correlation between the extracted defects and the</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>resulting mechanical properties.</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>The following libraries are needed for python and R.</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>os - used for reading paths </span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>sys - used for adding folders to path </span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>cv2 - the most powerful library for image processing currently available in terms of both performance and capability </span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>numpy - allows images to be eﬀiciently worked with as arrays. The foundation for cv2 </span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>pandas - the most popular python library for working with dataframes </span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>math - used for mathematical functions </span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>random - used to create random variables </span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>matplotlib.pyplot - most popular plotting language</span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="fu">### Loading Packages</span></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cv2</span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> datetime</span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> PIL</span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>In addition to these package, the recent release of Meta's foundation models segment anything and segment anything 2 will be explored for use in characterizing the unsegmented initiating defects from high resolution images. <span class="co">[</span><span class="ot">@kirillov_segment_2023</span><span class="co">] [@ravi2024sam2]</span></span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a><span class="fu"># Exploratory Data Analysis</span></span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a><span class="fu">## Explanation of your data set</span></span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>The dataset mostly consists of unorganized images in 2 folders, and the numerical data is stored in a handful of spreadsheets. The dataframe was created in two parts: 1) The image dataframe, which contains the path to the images and 2) the numerical dataframe where are spreadsheets were merged. The id used to merge these dataframes is the Sample#, which was extracted from the image path using a regex and was cleaned from the existing Sample# column in the numerical spreadsheets. For the image dataframes, different categories were made, and each has a corresponding function which takes a file path as input an returns true for whether the path leads to an image of that category. Data validation is done here to ensure that the categories are well defined. Also, since some categories can have multiple images per Sample#, each path actually points to a csv, which itself can contain multiple image paths.</span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Cleaning</span></span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a>Data cleaning was an iterative process, with the organize data script being run to create a dataframe, then the results analyzed and verified with a jupyter notebook. The organize data script is in it's own section, and the smaller chucks used to analyze the results are below it. Several sections are not fully cleaned, with the majority of the effort going to the fatigue and overload region, since they are the easiest to verify and should be the simplest task for the model since they are rather large.</span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a><span class="fu">### Organize data</span></span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a><span class="in">```{python #organize_data}</span></span>
+<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a><span class="in">#| code-overflow: wrap</span></span>
+<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a><span class="in">STITCHED_THRESHOLD = 3000000</span></span>
+<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a><span class="in">UPPER_RED_THRESHOLD = 1000</span></span>
+<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a><span class="in">LOWER_RED_THRESHOLD = 20</span></span>
+<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a><span class="in">check = re.compile(r'''</span></span>
+<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a><span class="in">    ^</span></span>
+<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a><span class="in">    (?:x)?</span></span>
+<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a><span class="in">    (?:\d+)?</span></span>
+<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a><span class="in">    (?:[a-b])?</span></span>
+<span id="cb5-91"><a href="#cb5-91" aria-hidden="true" tabindex="-1"></a><span class="in">    [-]?</span></span>
+<span id="cb5-92"><a href="#cb5-92" aria-hidden="true" tabindex="-1"></a><span class="in">    (?:Copy\ of\ |Overview|_STD_ETD_|Initiation)?  # Optional prefixes</span></span>
+<span id="cb5-93"><a href="#cb5-93" aria-hidden="true" tabindex="-1"></a><span class="in">    [-]?</span></span>
+<span id="cb5-94"><a href="#cb5-94" aria-hidden="true" tabindex="-1"></a><span class="in">    [\d]?</span></span>
+<span id="cb5-95"><a href="#cb5-95" aria-hidden="true" tabindex="-1"></a><span class="in">    [-]?</span></span>
+<span id="cb5-96"><a href="#cb5-96" aria-hidden="true" tabindex="-1"></a><span class="in">    [x]?</span></span>
+<span id="cb5-97"><a href="#cb5-97" aria-hidden="true" tabindex="-1"></a><span class="in">    (?:\d+)?</span></span>
+<span id="cb5-98"><a href="#cb5-98" aria-hidden="true" tabindex="-1"></a><span class="in">    [-]?</span></span>
+<span id="cb5-99"><a href="#cb5-99" aria-hidden="true" tabindex="-1"></a><span class="in">    # Start with EP, NASA, or CMU (case insensitive)</span></span>
+<span id="cb5-100"><a href="#cb5-100" aria-hidden="true" tabindex="-1"></a><span class="in">    (EP|NASA|CMU)                                  </span></span>
+<span id="cb5-101"><a href="#cb5-101" aria-hidden="true" tabindex="-1"></a><span class="in">    [-_]?                                          # Optional separator</span></span>
+<span id="cb5-102"><a href="#cb5-102" aria-hidden="true" tabindex="-1"></a><span class="in">    # Number or O followed by number</span></span>
+<span id="cb5-103"><a href="#cb5-103" aria-hidden="true" tabindex="-1"></a><span class="in">    (\d+|O\d+)                                     </span></span>
+<span id="cb5-104"><a href="#cb5-104" aria-hidden="true" tabindex="-1"></a><span class="in">    [-_]?                                        # Optional separator</span></span>
+<span id="cb5-105"><a href="#cb5-105" aria-hidden="true" tabindex="-1"></a><span class="in">    V?</span></span>
+<span id="cb5-106"><a href="#cb5-106" aria-hidden="true" tabindex="-1"></a><span class="in">    ([E\d]+|\d+)                                   # Version number</span></span>
+<span id="cb5-107"><a href="#cb5-107" aria-hidden="true" tabindex="-1"></a><span class="in">    [-_]?                                          # Optional separator</span></span>
+<span id="cb5-108"><a href="#cb5-108" aria-hidden="true" tabindex="-1"></a><span class="in">    (\d+)?                                         # Optional additional number</span></span>
+<span id="cb5-109"><a href="#cb5-109" aria-hidden="true" tabindex="-1"></a><span class="in">    (?:_MARKED)?                                   # Optional '_MARKED' suffix</span></span>
+<span id="cb5-110"><a href="#cb5-110" aria-hidden="true" tabindex="-1"></a><span class="in">    # Any characters in between (greedy by default)</span></span>
+<span id="cb5-111"><a href="#cb5-111" aria-hidden="true" tabindex="-1"></a><span class="in">    (.*)?                                          </span></span>
+<span id="cb5-112"><a href="#cb5-112" aria-hidden="true" tabindex="-1"></a><span class="in">    \.(png|tif|tiff|jpg)$                          # File extension</span></span>
+<span id="cb5-113"><a href="#cb5-113" aria-hidden="true" tabindex="-1"></a><span class="in">    ''', re.VERBOSE | re.IGNORECASE)</span></span>
+<span id="cb5-114"><a href="#cb5-114" aria-hidden="true" tabindex="-1"></a><span class="in">def print_dataframe(df):</span></span>
+<span id="cb5-115"><a href="#cb5-115" aria-hidden="true" tabindex="-1"></a><span class="in">    row_structure = '|{:^50}|{:^10}|{:^10}|{:^15}|'</span></span>
+<span id="cb5-116"><a href="#cb5-116" aria-hidden="true" tabindex="-1"></a><span class="in">    print(row_structure.format('Column name', 'Nulls','Values','Position'))</span></span>
+<span id="cb5-117"><a href="#cb5-117" aria-hidden="true" tabindex="-1"></a><span class="in">    i=0# Any characters in between (greedy by default)</span></span>
+<span id="cb5-118"><a href="#cb5-118" aria-hidden="true" tabindex="-1"></a><span class="in">    for column in df.columns:</span></span>
+<span id="cb5-119"><a href="#cb5-119" aria-hidden="true" tabindex="-1"></a><span class="in">        nas = df[colum# Any characters in between (greedy by default)n].isna().sum()</span></span>
+<span id="cb5-120"><a href="#cb5-120" aria-hidden="true" tabindex="-1"></a><span class="in">        print(row_structure.format(column,str(nas),str(len(df[column])-nas),</span></span>
+<span id="cb5-121"><a href="#cb5-121" aria-hidden="true" tabindex="-1"></a><span class="in">        str(i)))</span></span>
+<span id="cb5-122"><a href="#cb5-122" aria-hidden="true" tabindex="-1"></a><span class="in">        i+=1</span></span>
+<span id="cb5-123"><a href="#cb5-123" aria-hidden="true" tabindex="-1"></a><span class="in">def log_message(file_path, message):</span></span>
+<span id="cb5-124"><a href="#cb5-124" aria-hidden="true" tabindex="-1"></a><span class="in">    # Get the current date and time</span></span>
+<span id="cb5-125"><a href="#cb5-125" aria-hidden="true" tabindex="-1"></a><span class="in">    now = datetime.datetime.now()</span></span>
+<span id="cb5-126"><a href="#cb5-126" aria-hidden="true" tabindex="-1"></a><span class="in">    timestamp = now.strftime('%Y-%m-%d %H:%M:%S')</span></span>
+<span id="cb5-127"><a href="#cb5-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-128"><a href="#cb5-128" aria-hidden="true" tabindex="-1"></a><span class="in">    # Create the log entry</span></span>
+<span id="cb5-129"><a href="#cb5-129" aria-hidden="true" tabindex="-1"></a><span class="in">    log_entry = f'[{timestamp}] {message}\n'</span></span>
+<span id="cb5-130"><a href="#cb5-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-131"><a href="#cb5-131" aria-hidden="true" tabindex="-1"></a><span class="in">    # Append the log entry to the file</span></span>
+<span id="cb5-132"><a href="#cb5-132" aria-hidden="true" tabindex="-1"></a><span class="in">    with open(file_path, 'a') as file:</span></span>
+<span id="cb5-133"><a href="#cb5-133" aria-hidden="true" tabindex="-1"></a><span class="in">        file.write(log_entry)</span></span>
+<span id="cb5-134"><a href="#cb5-134" aria-hidden="true" tabindex="-1"></a><span class="in">def clean_Sample_num(x):</span></span>
+<span id="cb5-135"><a href="#cb5-135" aria-hidden="true" tabindex="-1"></a><span class="in">    try:</span></span>
+<span id="cb5-136"><a href="#cb5-136" aria-hidden="true" tabindex="-1"></a><span class="in">        m_f = re.match(r'^([A-Z]+)(\d+)-[V]?(\d+|E\d+)[-]?(\d+)?',x)</span></span>
+<span id="cb5-137"><a href="#cb5-137" aria-hidden="true" tabindex="-1"></a><span class="in">    except TypeError:</span></span>
+<span id="cb5-138"><a href="#cb5-138" aria-hidden="true" tabindex="-1"></a><span class="in">        return None</span></span>
+<span id="cb5-139"><a href="#cb5-139" aria-hidden="true" tabindex="-1"></a><span class="in">    if m_f:</span></span>
+<span id="cb5-140"><a href="#cb5-140" aria-hidden="true" tabindex="-1"></a><span class="in">        if(m_f.lastindex==4):</span></span>
+<span id="cb5-141"><a href="#cb5-141" aria-hidden="true" tabindex="-1"></a><span class="in">            return m_f.group(1)+m_f.group(2).lstrip('0').lstrip('O')+'-'+</span></span>
+<span id="cb5-142"><a href="#cb5-142" aria-hidden="true" tabindex="-1"></a><span class="in">          m_f.group(3)+'-'+str(int(m_f.group(4)))</span></span>
+<span id="cb5-143"><a href="#cb5-143" aria-hidden="true" tabindex="-1"></a><span class="in">        else:</span></span>
+<span id="cb5-144"><a href="#cb5-144" aria-hidden="true" tabindex="-1"></a><span class="in">            return m_f.group(1)+m_f.group(2).lstrip('0').lstrip('O')+'-'+</span></span>
+<span id="cb5-145"><a href="#cb5-145" aria-hidden="true" tabindex="-1"></a><span class="in">          m_f.group(3)+'-'+str('1')</span></span>
+<span id="cb5-146"><a href="#cb5-146" aria-hidden="true" tabindex="-1"></a><span class="in">    else:</span></span>
+<span id="cb5-147"><a href="#cb5-147" aria-hidden="true" tabindex="-1"></a><span class="in">        return None</span></span>
+<span id="cb5-148"><a href="#cb5-148" aria-hidden="true" tabindex="-1"></a><span class="in">def name_to_power(name:str, position:int):</span></span>
+<span id="cb5-149"><a href="#cb5-149" aria-hidden="true" tabindex="-1"></a><span class="in">    for idx, option in enumerate(process_parameters['Test ID']):</span></span>
+<span id="cb5-150"><a href="#cb5-150" aria-hidden="true" tabindex="-1"></a><span class="in">        if(option[2] == name[position]):</span></span>
+<span id="cb5-151"><a href="#cb5-151" aria-hidden="true" tabindex="-1"></a><span class="in">            return process_parameters['P (W)'][idx]</span></span>
+<span id="cb5-152"><a href="#cb5-152" aria-hidden="true" tabindex="-1"></a><span class="in">def name_to_velocity(name:str,position:int):</span></span>
+<span id="cb5-153"><a href="#cb5-153" aria-hidden="true" tabindex="-1"></a><span class="in">    for idx, option in enumerate(process_parameters['Test ID']):</span></span>
+<span id="cb5-154"><a href="#cb5-154" aria-hidden="true" tabindex="-1"></a><span class="in">        if(option[2] == name[position]):</span></span>
+<span id="cb5-155"><a href="#cb5-155" aria-hidden="true" tabindex="-1"></a><span class="in">            return process_parameters['V (mm/s)'][idx]</span></span>
+<span id="cb5-156"><a href="#cb5-156" aria-hidden="true" tabindex="-1"></a><span class="in">def clean_name(input):</span></span>
+<span id="cb5-157"><a href="#cb5-157" aria-hidden="true" tabindex="-1"></a><span class="in">    return input.astype(str).str.replace('0','').str.rstrip('.')</span></span>
+<span id="cb5-158"><a href="#cb5-158" aria-hidden="true" tabindex="-1"></a><span class="in">def clean_BuildID(input):</span></span>
+<span id="cb5-159"><a href="#cb5-159" aria-hidden="true" tabindex="-1"></a><span class="in">    try:</span></span>
+<span id="cb5-160"><a href="#cb5-160" aria-hidden="true" tabindex="-1"></a><span class="in">        match = re.match(r'([A-Z]+)(\d+)',input,re.IGNORECASE)</span></span>
+<span id="cb5-161"><a href="#cb5-161" aria-hidden="true" tabindex="-1"></a><span class="in">        if match:</span></span>
+<span id="cb5-162"><a href="#cb5-162" aria-hidden="true" tabindex="-1"></a><span class="in">            prefix = match.group(1).lstrip('O')</span></span>
+<span id="cb5-163"><a href="#cb5-163" aria-hidden="true" tabindex="-1"></a><span class="in">            numeric_part = match.group(2).lstrip('0')</span></span>
+<span id="cb5-164"><a href="#cb5-164" aria-hidden="true" tabindex="-1"></a><span class="in">            return prefix + numeric_part</span></span>
+<span id="cb5-165"><a href="#cb5-165" aria-hidden="true" tabindex="-1"></a><span class="in">    except TypeError:</span></span>
+<span id="cb5-166"><a href="#cb5-166" aria-hidden="true" tabindex="-1"></a><span class="in">        print(input)</span></span>
+<span id="cb5-167"><a href="#cb5-167" aria-hidden="true" tabindex="-1"></a><span class="in">#Adds File if Condition(path) return True</span></span>
+<span id="cb5-168"><a href="#cb5-168" aria-hidden="true" tabindex="-1"></a><span class="in">def recursive_search(condition,path:str, file_list:list):</span></span>
+<span id="cb5-169"><a href="#cb5-169" aria-hidden="true" tabindex="-1"></a><span class="in">    if os.path.isdir(path):</span></span>
+<span id="cb5-170"><a href="#cb5-170" aria-hidden="true" tabindex="-1"></a><span class="in">        for path_loop in os.listdir(path):</span></span>
+<span id="cb5-171"><a href="#cb5-171" aria-hidden="true" tabindex="-1"></a><span class="in">            recursive_search(condition,os.path.join(path,path_loop),file_list)</span></span>
+<span id="cb5-172"><a href="#cb5-172" aria-hidden="true" tabindex="-1"></a><span class="in">    else:</span></span>
+<span id="cb5-173"><a href="#cb5-173" aria-hidden="true" tabindex="-1"></a><span class="in">        if(condition(path)):</span></span>
+<span id="cb5-174"><a href="#cb5-174" aria-hidden="true" tabindex="-1"></a><span class="in">            file_list.append(path)</span></span>
+<span id="cb5-175"><a href="#cb5-175" aria-hidden="true" tabindex="-1"></a><span class="in">    return file_list</span></span>
+<span id="cb5-176"><a href="#cb5-176" aria-hidden="true" tabindex="-1"></a><span class="in">#Functions used for Validation</span></span>
+<span id="cb5-177"><a href="#cb5-177" aria-hidden="true" tabindex="-1"></a><span class="in">def size(image_path):</span></span>
+<span id="cb5-178"><a href="#cb5-178" aria-hidden="true" tabindex="-1"></a><span class="in">    img = cv2.imread(image_path)</span></span>
+<span id="cb5-179"><a href="#cb5-179" aria-hidden="true" tabindex="-1"></a><span class="in">    try:</span></span>
+<span id="cb5-180"><a href="#cb5-180" aria-hidden="true" tabindex="-1"></a><span class="in">        return img.shape[0] * img.shape[1]</span></span>
+<span id="cb5-181"><a href="#cb5-181" aria-hidden="true" tabindex="-1"></a><span class="in">    except AttributeEr# Any characters in between (greedy by default)ror:</span></span>
+<span id="cb5-182"><a href="#cb5-182" aria-hidden="true" tabindex="-1"></a><span class="in">        print('File is corrupted: '+image_path)</span></span>
+<span id="cb5-183"><a href="#cb5-183" aria-hidden="true" tabindex="-1"></a><span class="in">        return -1</span></span>
+<span id="cb5-184"><a href="#cb5-184" aria-hidden="true" tabindex="-1"></a><span class="in">def size_red(image_path):</span></span>
+<span id="cb5-185"><a href="#cb5-185" aria-hidden="true" tabindex="-1"></a><span class="in">   img = cv2.imread(image_path)</span></span>
+<span id="cb5-186"><a href="#cb5-186" aria-hidden="true" tabindex="-1"></a><span class="in">   try:</span></span>
+<span id="cb5-187"><a href="#cb5-187" aria-hidden="true" tabindex="-1"></a><span class="in">        #Convert the image from BGR to HSV color space</span></span>
+<span id="cb5-188"><a href="#cb5-188" aria-hidden="true" tabindex="-1"></a><span class="in">        hsv_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)</span></span>
+<span id="cb5-189"><a href="#cb5-189" aria-hidden="true" tabindex="-1"></a><span class="in">        # Any characters in between (greedy by default)</span></span>
+<span id="cb5-190"><a href="#cb5-190" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-191"><a href="#cb5-191" aria-hidden="true" tabindex="-1"></a><span class="in">        # Define the lower and upper bounds for the red color in HSV space</span></span>
+<span id="cb5-192"><a href="#cb5-192" aria-hidden="true" tabindex="-1"></a><span class="in">        lower_red_1 = np.array([0, 50, 50])</span></span>
+<span id="cb5-193"><a href="#cb5-193" aria-hidden="true" tabindex="-1"></a><span class="in">        upper_red_1 = np.array([10, 255, 255])</span></span>
+<span id="cb5-194"><a href="#cb5-194" aria-hidden="true" tabindex="-1"></a><span class="in">        # Any characters in between (greedy by default)</span></span>
+<span id="cb5-195"><a href="#cb5-195" aria-hidden="true" tabindex="-1"></a><span class="in">        lower_red_2 = np.array([170, 50, 50])</span></span>
+<span id="cb5-196"><a href="#cb5-196" aria-hidden="true" tabindex="-1"></a><span class="in">        upper_red_2 = np.array([180, 255, 255])</span></span>
+<span id="cb5-197"><a href="#cb5-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-198"><a href="#cb5-198" aria-hidden="true" tabindex="-1"></a><span class="in">        # Create masks for the red color ranges</span></span>
+<span id="cb5-199"><a href="#cb5-199" aria-hidden="true" tabindex="-1"></a><span class="in">        mask1 = cv2.inRange(hsv_image, lower_red_1, upper_red_1)</span></span>
+<span id="cb5-200"><a href="#cb5-200" aria-hidden="true" tabindex="-1"></a><span class="in">        mask2 = cv2.in# Any characters in between (greedy by default)Range(hsv_image, lower_red_2, upper_red_2)</span></span>
+<span id="cb5-201"><a href="#cb5-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-202"><a href="#cb5-202" aria-hidden="true" tabindex="-1"></a><span class="in">        # Combine the masks</span></span>
+<span id="cb5-203"><a href="#cb5-203" aria-hidden="true" tabindex="-1"></a><span class="in">        red_mask = mask1 + mask2</span></span>
+<span id="cb5-204"><a href="#cb5-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-205"><a href="#cb5-205" aria-hidden="true" tabindex="-1"></a><span class="in">        # Count the number of red pixels</span></span>
+<span id="cb5-206"><a href="#cb5-206" aria-hidden="true" tabindex="-1"></a><span class="in">        red_pixels = cv2.countNonZero(red_mask)</span></span>
+<span id="cb5-207"><a href="#cb5-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-208"><a href="#cb5-208" aria-hidden="true" tabindex="-1"></a><span class="in">        return(red_pixels)</span></span>
+<span id="cb5-209"><a href="#cb5-209" aria-hidden="true" tabindex="-1"></a><span class="in">   except AttributeError:</span></span>
+<span id="cb5-210"><a href="#cb5-210" aria-hidden="true" tabindex="-1"></a><span class="in">       print('File is corrupted: '+image_path)</span></span>
+<span id="cb5-211"><a href="#cb5-211" aria-hidden="true" tabindex="-1"></a><span class="in">       return -1</span></span>
+<span id="cb5-212"><a href="#cb5-212" aria-hidden="true" tabindex="-1"></a><span class="in">def is_greyscale(image_path):</span></span>
+<span id="cb5-213"><a href="#cb5-213" aria-hidden="true" tabindex="-1"></a><span class="in">    img = cv2.imread(image_path)</span></span>
+<span id="cb5-214"><a href="#cb5-214" aria-hidden="true" tabindex="-1"></a><span class="in">    if len(img.shape) &lt; 3:</span></span>
+<span id="cb5-215"><a href="#cb5-215" aria-hidden="true" tabindex="-1"></a><span class="in">        return True</span></span>
+<span id="cb5-216"><a href="#cb5-216" aria-hidden="true" tabindex="-1"></a><span class="in">    if img.shape[2] == 1:</span></span>
+<span id="cb5-217"><a href="#cb5-217" aria-hidden="true" tabindex="-1"></a><span class="in">        return True</span></span>
+<span id="cb5-218"><a href="#cb5-218" aria-hidden="true" tabindex="-1"></a><span class="in">    # If the image is color, check if all channels are equal</span></span>
+<span id="cb5-219"><a href="#cb5-219" aria-hidden="true" tabindex="-1"></a><span class="in">    if np.allclose(img[:, :, 0], img[:, :, 1]) and np.allclose(img[:, :, 1], </span></span>
+<span id="cb5-220"><a href="#cb5-220" aria-hidden="true" tabindex="-1"></a><span class="in">    img[:, :, 2]):</span></span>
+<span id="cb5-221"><a href="#cb5-221" aria-hidden="true" tabindex="-1"></a><span class="in">        return True</span></span>
+<span id="cb5-222"><a href="#cb5-222" aria-hidden="true" tabindex="-1"></a><span class="in">    return False</span></span>
+<span id="cb5-223"><a href="#cb5-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-224"><a href="#cb5-224" aria-hidden="true" tabindex="-1"></a><span class="in">def is_binary(path):</span></span>
+<span id="cb5-225"><a href="#cb5-225" aria-hidden="true" tabindex="-1"></a><span class="in">    try:</span></span>
+<span id="cb5-226"><a href="#cb5-226" aria-hidden="true" tabindex="-1"></a><span class="in">        img = PIL.Image.open(path)</span></span>
+<span id="cb5-227"><a href="#cb5-227" aria-hidden="true" tabindex="-1"></a><span class="in">        img = img.convert('L')</span></span>
+<span id="cb5-228"><a href="#cb5-228" aria-hidden="true" tabindex="-1"></a><span class="in">        img_data = np.array(img)</span></span>
+<span id="cb5-229"><a href="#cb5-229" aria-hidden="true" tabindex="-1"></a><span class="in">        unique_vals = np.unique(img_data)</span></span>
+<span id="cb5-230"><a href="#cb5-230" aria-hidden="true" tabindex="-1"></a><span class="in">        if len(unique_vals) == 2 and set(unique_vals) == {0, 255}:</span></span>
+<span id="cb5-231"><a href="#cb5-231" aria-hidden="true" tabindex="-1"></a><span class="in">            return True</span></span>
+<span id="cb5-232"><a href="#cb5-232" aria-hidden="true" tabindex="-1"></a><span class="in">        else:</span></span>
+<span id="cb5-233"><a href="#cb5-233" aria-hidden="true" tabindex="-1"></a><span class="in">            return False</span></span>
+<span id="cb5-234"><a href="#cb5-234" aria-hidden="true" tabindex="-1"></a><span class="in">    except PIL.UnidentifiedImageError:</span></span>
+<span id="cb5-235"><a href="#cb5-235" aria-hidden="true" tabindex="-1"></a><span class="in">        return False    </span></span>
+<span id="cb5-236"><a href="#cb5-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-237"><a href="#cb5-237" aria-hidden="true" tabindex="-1"></a><span class="in">def is_8bit(path):</span></span>
+<span id="cb5-238"><a href="#cb5-238" aria-hidden="true" tabindex="-1"></a><span class="in">    try:</span></span>
+<span id="cb5-239"><a href="#cb5-239" aria-hidden="true" tabindex="-1"></a><span class="in">        img = PIL.Image.open(path)</span></span>
+<span id="cb5-240"><a href="#cb5-240" aria-hidden="true" tabindex="-1"></a><span class="in">        img = img.convert('L')</span></span>
+<span id="cb5-241"><a href="#cb5-241" aria-hidden="true" tabindex="-1"></a><span class="in">        img_data = np.array(img)</span></span>
+<span id="cb5-242"><a href="#cb5-242" aria-hidden="true" tabindex="-1"></a><span class="in">        if img_data.min() &lt; 0 or img_data.max() &gt; 255:</span></span>
+<span id="cb5-243"><a href="#cb5-243" aria-hidden="true" tabindex="-1"></a><span class="in">            return False</span></span>
+<span id="cb5-244"><a href="#cb5-244" aria-hidden="true" tabindex="-1"></a><span class="in">        else:</span></span>
+<span id="cb5-245"><a href="#cb5-245" aria-hidden="true" tabindex="-1"></a><span class="in">            return True</span></span>
+<span id="cb5-246"><a href="#cb5-246" aria-hidden="true" tabindex="-1"></a><span class="in">    except PIL.UnidentifiedImageError:</span></span>
+<span id="cb5-247"><a href="#cb5-247" aria-hidden="true" tabindex="-1"></a><span class="in">        return False</span></span>
+<span id="cb5-248"><a href="#cb5-248" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-249"><a href="#cb5-249" aria-hidden="true" tabindex="-1"></a><span class="in">#Different columns that would be valuable to have</span></span>
+<span id="cb5-250"><a href="#cb5-250" aria-hidden="true" tabindex="-1"></a><span class="in">def valid_image(path):</span></span>
+<span id="cb5-251"><a href="#cb5-251" aria-hidden="true" tabindex="-1"></a><span class="in">    for i in ['.csv','.hdr','.xlsx']:</span></span>
+<span id="cb5-252"><a href="#cb5-252" aria-hidden="true" tabindex="-1"></a><span class="in">        if i in path:</span></span>
+<span id="cb5-253"><a href="#cb5-253" aria-hidden="true" tabindex="-1"></a><span class="in">            return False</span></span>
+<span id="cb5-254"><a href="#cb5-254" aria-hidden="true" tabindex="-1"></a><span class="in">    if is_8bit(path):</span></span>
+<span id="cb5-255"><a href="#cb5-255" aria-hidden="true" tabindex="-1"></a><span class="in">        return True</span></span>
+<span id="cb5-256"><a href="#cb5-256" aria-hidden="true" tabindex="-1"></a><span class="in">    else:</span></span>
+<span id="cb5-257"><a href="#cb5-257" aria-hidden="true" tabindex="-1"></a><span class="in">        return FalseSegment anything will be used [@kirillov_segment_2023]</span></span>
+<span id="cb5-258"><a href="#cb5-258" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-259"><a href="#cb5-259" aria-hidden="true" tabindex="-1"></a><span class="in">def marked(path):# Any characters in between (greedy by default)</span></span>
+<span id="cb5-260"><a href="#cb5-260" aria-hidden="true" tabindex="-1"></a><span class="in">    if 'marked' in path.lower() and valid_image(path) and </span></span>
+<span id="cb5-261"><a href="#cb5-261" aria-hidden="true" tabindex="-1"></a><span class="in">    not is_greyscale(path):</span></span>
+<span id="cb5-262"><a href="#cb5-262" aria-hidden="true" tabindex="-1"></a><span class="in">        return True</span></span>
+<span id="cb5-263"><a href="#cb5-263" aria-hidden="true" tabindex="-1"></a><span class="in">    else:</span></span>
+<span id="cb5-264"><a href="#cb5-264" aria-hidden="true" tabindex="-1"></a><span class="in">        return False</span></span>
+<span id="cb5-265"><a href="#cb5-265" aria-hidden="true" tabindex="-1"></a><span class="in">def initiation(path):</span></span>
+<span id="cb5-266"><a href="#cb5-266" aria-hidden="true" tabindex="-1"></a><span class="in">    if ('_001' in path or 'initiation' in path.lower()) and valid_image(path)</span></span>
+<span id="cb5-267"><a href="#cb5-267" aria-hidden="true" tabindex="-1"></a><span class="in">    and size(path)&lt;STITCHED_THRESHOLD:</span></span>
+<span id="cb5-268"><a href="#cb5-268" aria-hidden="true" tabindex="-1"></a><span class="in">        return True</span></span>
+<span id="cb5-269"><a href="#cb5-269" aria-hidden="true" tabindex="-1"></a><span class="in">    else:</span></span>
+<span id="cb5-270"><a href="#cb5-270" aria-hidden="true" tabindex="-1"></a><span class="in">        return False</span></span>
+<span id="cb5-271"><a href="#cb5-271" aria-hidden="true" tabindex="-1"></a><span class="in">def stitched(path):</span></span>
+<span id="cb5-272"><a href="#cb5-272" aria-hidden="true" tabindex="-1"></a><span class="in">    if ('stitched' in path.lower() or 'composite' in path.lower()) and</span></span>
+<span id="cb5-273"><a href="#cb5-273" aria-hidden="true" tabindex="-1"></a><span class="in">    valid_image(path) and size(path) &gt;STITCHED_THRESHOLD:</span></span>
+<span id="cb5-274"><a href="#cb5-274" aria-hidden="true" tabindex="-1"></a><span class="in">        return True</span></span>
+<span id="cb5-275"><a href="#cb5-275" aria-hidden="true" tabindex="-1"></a><span class="in">    else:</span></span>
+<span id="cb5-276"><a href="#cb5-276" aria-hidden="true" tabindex="-1"></a><span class="in">        return False</span></span>
+<span id="cb5-277"><a href="#cb5-277" aria-hidden="true" tabindex="-1"></a><span class="in">def full_surface_marked(path):</span></span>
+<span id="cb5-278"><a href="#cb5-278" aria-hidden="true" tabindex="-1"></a><span class="in">    if stitched(path) and (not is_greyscale(path)) and</span></span>
+<span id="cb5-279"><a href="#cb5-279" aria-hidden="true" tabindex="-1"></a><span class="in">    (size_red(path)&gt;UPPER_RED_THRESHOLD):</span></span>
+<span id="cb5-280"><a href="#cb5-280" aria-hidden="true" tabindex="-1"></a><span class="in">        return True</span></span>
+<span id="cb5-281"><a href="#cb5-281" aria-hidden="true" tabindex="-1"></a><span class="in">    else:</span></span>
+<span id="cb5-282"><a href="#cb5-282" aria-hidden="true" tabindex="-1"></a><span class="in">        return False</span></span>
+<span id="cb5-283"><a href="#cb5-283" aria-hidden="true" tabindex="-1"></a><span class="in">def initation_marked_stitched(path):</span></span>
+<span id="cb5-284"><a href="#cb5-284" aria-hidden="true" tabindex="-1"></a><span class="in">    if stitched(path) and (not is_greyscale(path)) and</span></span>
+<span id="cb5-285"><a href="#cb5-285" aria-hidden="true" tabindex="-1"></a><span class="in">    (LOWER_RED_THRESHOLD&lt;size_red(path)&lt;UPPER_RED_THRESHOLD):</span></span>
+<span id="cb5-286"><a href="#cb5-286" aria-hidden="true" tabindex="-1"></a><span class="in">        return True</span></span>
+<span id="cb5-287"><a href="#cb5-287" aria-hidden="true" tabindex="-1"></a><span class="in">    else:</span></span>
+<span id="cb5-288"><a href="#cb5-288" aria-hidden="true" tabindex="-1"></a><span class="in">        return False</span></span>
+<span id="cb5-289"><a href="#cb5-289" aria-hidden="true" tabindex="-1"></a><span class="in">def fatigue(path):</span></span>
+<span id="cb5-290"><a href="#cb5-290" aria-hidden="true" tabindex="-1"></a><span class="in">    if 'fatigue' in path.lower() and valid_image(path) and is_binary(path):</span></span>
+<span id="cb5-291"><a href="#cb5-291" aria-hidden="true" tabindex="-1"></a><span class="in">        return True</span></span>
+<span id="cb5-292"><a href="#cb5-292" aria-hidden="true" tabindex="-1"></a><span class="in">    else:</span></span>
+<span id="cb5-293"><a href="#cb5-293" aria-hidden="true" tabindex="-1"></a><span class="in">        return False</span></span>
+<span id="cb5-294"><a href="#cb5-294" aria-hidden="true" tabindex="-1"></a><span class="in">def overload(path):</span></span>
+<span id="cb5-295"><a href="#cb5-295" aria-hidden="true" tabindex="-1"></a><span class="in">    if 'overload' in path.lower() and valid_image(path) and is_binary(path):</span></span>
+<span id="cb5-296"><a href="#cb5-296" aria-hidden="true" tabindex="-1"></a><span class="in">        return True</span></span>
+<span id="cb5-297"><a href="#cb5-297" aria-hidden="true" tabindex="-1"></a><span class="in">    else:</span></span>
+<span id="cb5-298"><a href="#cb5-298" aria-hidden="true" tabindex="-1"></a><span class="in">        return False</span></span>
+<span id="cb5-299"><a href="#cb5-299" aria-hidden="true" tabindex="-1"></a><span class="in">def exclude(input):</span></span>
+<span id="cb5-300"><a href="#cb5-300" aria-hidden="true" tabindex="-1"></a><span class="in">    conditions = ['.hdr', '.csv','.info','.xlsx','.pptx','.s0001','.zip',</span></span>
+<span id="cb5-301"><a href="#cb5-301" aria-hidden="true" tabindex="-1"></a><span class="in">    '.model']</span></span>
+<span id="cb5-302"><a href="#cb5-302" aria-hidden="true" tabindex="-1"></a><span class="in">    for condition in conditions:</span></span>
+<span id="cb5-303"><a href="#cb5-303" aria-hidden="true" tabindex="-1"></a><span class="in">        if condition in input: return True</span></span>
+<span id="cb5-304"><a href="#cb5-304" aria-hidden="true" tabindex="-1"></a><span class="in">    return False</span></span>
+<span id="cb5-305"><a href="#cb5-305" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-306"><a href="#cb5-306" aria-hidden="true" tabindex="-1"></a><span class="in">def check_regex_basename(dict_to_search,search_function, exclude_conditions):</span></span>
+<span id="cb5-307"><a href="#cb5-307" aria-hidden="true" tabindex="-1"></a><span class="in">    i=0</span></span>
+<span id="cb5-308"><a href="#cb5-308" aria-hidden="true" tabindex="-1"></a><span class="in">    for key in dict_to_search:</span></span>
+<span id="cb5-309"><a href="#cb5-309" aria-hidden="true" tabindex="-1"></a><span class="in">        for field in dict_to_search[key]:</span></span>
+<span id="cb5-310"><a href="#cb5-310" aria-hidden="true" tabindex="-1"></a><span class="in">            basename = field.split('/')[-1]</span></span>
+<span id="cb5-311"><a href="#cb5-311" aria-hidden="true" tabindex="-1"></a><span class="in">            if not search_function(basename) and not exclude(basename):</span></span>
+<span id="cb5-312"><a href="#cb5-312" aria-hidden="true" tabindex="-1"></a><span class="in">                print(basename)</span></span>
+<span id="cb5-313"><a href="#cb5-313" aria-hidden="true" tabindex="-1"></a><span class="in">                i+=1</span></span>
+<span id="cb5-314"><a href="#cb5-314" aria-hidden="true" tabindex="-1"></a><span class="in">        print('Unselected files: '+str(i))</span></span>
+<span id="cb5-315"><a href="#cb5-315" aria-hidden="true" tabindex="-1"></a><span class="in">def regex_basename(pattern):</span></span>
+<span id="cb5-316"><a href="#cb5-316" aria-hidden="true" tabindex="-1"></a><span class="in">    match = re.search(check,pattern)</span></span>
+<span id="cb5-317"><a href="#cb5-317" aria-hidden="true" tabindex="-1"></a><span class="in">    if(match):</span></span>
+<span id="cb5-318"><a href="#cb5-318" aria-hidden="true" tabindex="-1"></a><span class="in">        type_func = clean_BuildID(match.group(1)+match.group(2))</span></span>
+<span id="cb5-319"><a href="#cb5-319" aria-hidden="true" tabindex="-1"></a><span class="in">        series_func = match.group(3).lstrip("0")</span></span>
+<span id="cb5-320"><a href="#cb5-320" aria-hidden="true" tabindex="-1"></a><span class="in">        if match.group(4):</span></span>
+<span id="cb5-321"><a href="#cb5-321" aria-hidden="true" tabindex="-1"></a><span class="in">            posit_idx_func = match.group(4).lstrip("0")</span></span>
+<span id="cb5-322"><a href="#cb5-322" aria-hidden="true" tabindex="-1"></a><span class="in">        else:</span></span>
+<span id="cb5-323"><a href="#cb5-323" aria-hidden="true" tabindex="-1"></a><span class="in">            posit_idx_func = None</span></span>
+<span id="cb5-324"><a href="#cb5-324" aria-hidden="true" tabindex="-1"></a><span class="in">        return type_func, series_func,posit_idx_func</span></span>
+<span id="cb5-325"><a href="#cb5-325" aria-hidden="true" tabindex="-1"></a><span class="in">    else:</span></span>
+<span id="cb5-326"><a href="#cb5-326" aria-hidden="true" tabindex="-1"></a><span class="in">        return None</span></span>
+<span id="cb5-327"><a href="#cb5-327" aria-hidden="true" tabindex="-1"></a><span class="in">LOG_FILE = '/home/aml334/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/' +</span></span>
+<span id="cb5-328"><a href="#cb5-328" aria-hidden="true" tabindex="-1"></a><span class="in">'fractography/combined_df_log.txt'</span></span>
+<span id="cb5-329"><a href="#cb5-329" aria-hidden="true" tabindex="-1"></a><span class="in">MESSAGE = 'Added lower threshold for initation_marked_stitched'</span></span>
+<span id="cb5-330"><a href="#cb5-330" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-331"><a href="#cb5-331" aria-hidden="true" tabindex="-1"></a><span class="in">manuel_mask_path = '/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/' +</span></span>
+<span id="cb5-332"><a href="#cb5-332" aria-hidden="true" tabindex="-1"></a><span class="in">'keyence-fractography/manuel_mask'</span></span>
+<span id="cb5-333"><a href="#cb5-333" aria-hidden="true" tabindex="-1"></a><span class="in">fractography_path = '# Any characters in between (greedy by default)/mnt/vstor/CSE_MSE_RXF131/staging/mds3/fractography'</span></span>
+<span id="cb5-334"><a href="#cb5-334" aria-hidden="true" tabindex="-1"></a><span class="in">csv_dir = "/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/"+</span></span>
+<span id="cb5-335"><a href="#cb5-335" aria-hidden="true" tabindex="-1"></a><span class="in">"Sample#csvs"</span></span>
+<span id="cb5-336"><a href="#cb5-336" aria-hidden="true" tabindex="-1"></a><span class="in">path_list = [fractography_path,manuel_mask_path]</span></span>
+<span id="cb5-337"><a href="#cb5-337" aria-hidden="true" tabindex="-1"></a><span class="in">condition_list = [</span></span>
+<span id="cb5-338"><a href="#cb5-338" aria-hidden="true" tabindex="-1"></a><span class="in">    valid_image,</span></span>
+<span id="cb5-339"><a href="#cb5-339" aria-hidden="true" tabindex="-1"></a><span class="in">    initiation,</span></span>
+<span id="cb5-340"><a href="#cb5-340" aria-hidden="true" tabindex="-1"></a><span class="in">    stitched,</span></span>
+<span id="cb5-341"><a href="#cb5-341" aria-hidden="true" tabindex="-1"></a><span class="in">    full_surface_marked,</span></span>
+<span id="cb5-342"><a href="#cb5-342" aria-hidden="true" tabindex="-1"></a><span class="in">    initation_marked_stitched,</span></span>
+<span id="cb5-343"><a href="#cb5-343" aria-hidden="true" tabindex="-1"></a><span class="in">    fatigue,# Any characters in between (greedy by default)</span></span>
+<span id="cb5-344"><a href="#cb5-344" aria-hidden="true" tabindex="-1"></a><span class="in">    overload</span></span>
+<span id="cb5-345"><a href="#cb5-345" aria-hidden="true" tabindex="-1"></a><span class="in">]</span></span>
+<span id="cb5-346"><a href="#cb5-346" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-347"><a href="#cb5-347" aria-hidden="true" tabindex="-1"></a><span class="in">if __name__=="__main__":</span></span>
+<span id="cb5-348"><a href="#cb5-348" aria-hidden="true" tabindex="-1"></a><span class="in">    # EP04,5,7 + NASA</span></span>
+<span id="cb5-349"><a href="#cb5-349" aria-hidden="true" tabindex="-1"></a><span class="in">    EP04 = pd.read_excel('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/'+</span></span>
+<span id="cb5-350"><a href="#cb5-350" aria-hidden="true" tabindex="-1"></a><span class="in">    'fractography/EP04 (Complete)/EP04 Fractographical Data.xlsx')</span></span>
+<span id="cb5-351"><a href="#cb5-351" aria-hidden="true" tabindex="-1"></a><span class="in">    EP05 = pd.read_excel('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/'+</span></span>
+<span id="cb5-352"><a href="#cb5-352" aria-hidden="true" tabindex="-1"></a><span class="in">    'fractography/EP05/EP05 Fractographical Data_cycles_added.xlsx')</span></span>
+<span id="cb5-353"><a href="#cb5-353" aria-hidden="true" tabindex="-1"></a><span class="in">    EP07 = pd.read_excel('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/'+</span></span>
+<span id="cb5-354"><a href="#cb5-354" aria-hidden="true" tabindex="-1"></a><span class="in">    'fractography/EP07/EP07-Fractographical Data.xlsx')</span></span>
+<span id="cb5-355"><a href="#cb5-355" aria-hidden="true" tabindex="-1"></a><span class="in">    NASA = pd.read_excel('/home/aml334/CSE_MSE_RXF131/staging/mds3/'+</span></span>
+<span id="cb5-356"><a href="#cb5-356" aria-hidden="true" tabindex="-1"></a><span class="in">    'fractography/NASA03/NASA Fractographical Data_Chris-Updated 9_2.xlsx',</span></span>
+<span id="cb5-357"><a href="#cb5-357" aria-hidden="true" tabindex="-1"></a><span class="in">    skiprows=1)</span></span>
+<span id="cb5-358"><a href="#cb5-358" aria-hidden="true" tabindex="-1"></a><span class="in">    output = pd.concat([EP04,EP05,EP07,NASA])</span></span>
+<span id="cb5-359"><a href="#cb5-359" aria-hidden="true" tabindex="-1"></a><span class="in">    output['Sample#'] = output['Sample#'].apply(clean_Sample_num)</span></span>
+<span id="cb5-360"><a href="#cb5-360" aria-hidden="true" tabindex="-1"></a><span class="in">    output.insert(0,'Test ID',output['Sample#'] + '-0')</span></span>
+<span id="cb5-361"><a href="#cb5-361" aria-hidden="true" tabindex="-1"></a><span class="in">    del EP04</span></span>
+<span id="cb5-362"><a href="#cb5-362" aria-hidden="true" tabindex="-1"></a><span class="in">    del EP05</span></span>
+<span id="cb5-363"><a href="#cb5-363" aria-hidden="true" tabindex="-1"></a><span class="in">    del EP07</span></span>
+<span id="cb5-364"><a href="#cb5-364" aria-hidden="true" tabindex="-1"></a><span class="in">    del NASA</span></span>
+<span id="cb5-365"><a href="#cb5-365" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-366"><a href="#cb5-366" aria-hidden="true" tabindex="-1"></a><span class="in">    process_parameters =pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/staging/mds3/'+</span></span>
+<span id="cb5-367"><a href="#cb5-367" aria-hidden="true" tabindex="-1"></a><span class="in">    'fractography/variable-process-parameters.csv')</span></span>
+<span id="cb5-368"><a href="#cb5-368" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-369"><a href="#cb5-369" aria-hidden="true" tabindex="-1"></a><span class="in">    output['Load Ratio (R)'] = 0.1</span></span>
+<span id="cb5-370"><a href="#cb5-370" aria-hidden="true" tabindex="-1"></a><span class="in">    output['Scan Power (W)'] = </span></span>
+<span id="cb5-371"><a href="#cb5-371" aria-hidden="true" tabindex="-1"></a><span class="in">    output['Sample#'].apply(lambda row:name_to_power(row,4))</span></span>
+<span id="cb5-372"><a href="#cb5-372" aria-hidden="true" tabindex="-1"></a><span class="in">    output['Scan velocity (mm/s)'] = output['Sample#'].apply(</span></span>
+<span id="cb5-373"><a href="#cb5-373" aria-hidden="true" tabindex="-1"></a><span class="in">      lambda row: name_to_velocity(row,4))</span></span>
+<span id="cb5-374"><a href="#cb5-374" aria-hidden="true" tabindex="-1"></a><span class="in">    output['Retest']=0</span></span>
+<span id="cb5-375"><a href="#cb5-375" aria-hidden="true" tabindex="-1"></a><span class="in">    output.head(3)</span></span>
+<span id="cb5-376"><a href="#cb5-376" aria-hidden="true" tabindex="-1"></a><span class="in">    del name_to_power</span></span>
+<span id="cb5-377"><a href="#cb5-377" aria-hidden="true" tabindex="-1"></a><span class="in">    del name_to_velocity</span></span>
+<span id="cb5-378"><a href="#cb5-378" aria-hidden="true" tabindex="-1"></a><span class="in">    del process_parameters</span></span>
+<span id="cb5-379"><a href="#cb5-379" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-380"><a href="#cb5-380" aria-hidden="true" tabindex="-1"></a><span class="in">    #Brett Spreashsheet</span></span>
+<span id="cb5-381"><a href="#cb5-381" aria-hidden="true" tabindex="-1"></a><span class="in">    Brett_spreadsheet =pd.ExcelFile('/mnt/vstor/CSE_MSE_RXF131/'+</span></span>
+<span id="cb5-382"><a href="#cb5-382" aria-hidden="true" tabindex="-1"></a><span class="in">    'staging/mds3/fractography/4-pt Bend Data Master '+</span></span>
+<span id="cb5-383"><a href="#cb5-383" aria-hidden="true" tabindex="-1"></a><span class="in">    'Spreadsheet_exit_8_27_24.xlsx')</span></span>
+<span id="cb5-384"><a href="#cb5-384" aria-hidden="true" tabindex="-1"></a><span class="in">    excel_df = pd.DataFrame()</span></span>
+<span id="cb5-385"><a href="#cb5-385" aria-hidden="true" tabindex="-1"></a><span class="in">    for worksheet in Brett_spreadsheet.sheet_names:</span></span>
+<span id="cb5-386"><a href="#cb5-386" aria-hidden="true" tabindex="-1"></a><span class="in">        if worksheet not in ['Template','To Test','Retest']:</span></span>
+<span id="cb5-387"><a href="#cb5-387" aria-hidden="true" tabindex="-1"></a><span class="in">            excel_df = pd.concat([excel_df,</span></span>
+<span id="cb5-388"><a href="#cb5-388" aria-hidden="true" tabindex="-1"></a><span class="in">            pd.read_excel(Brett_spreadsheet,worksheet)])</span></span>
+<span id="cb5-389"><a href="#cb5-389" aria-hidden="true" tabindex="-1"></a><span class="in">    del Brett_spreadsheet</span></span>
+<span id="cb5-390"><a href="#cb5-390" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-391"><a href="#cb5-391" aria-hidden="true" tabindex="-1"></a><span class="in">    #Making key</span></span>
+<span id="cb5-392"><a href="#cb5-392" aria-hidden="true" tabindex="-1"></a><span class="in">    excel_df['Sample#'] = excel_df['Build ID'].apply(clean_BuildID) + '-'+</span></span>
+<span id="cb5-393"><a href="#cb5-393" aria-hidden="true" tabindex="-1"></a><span class="in">    excel_df['Build #'].apply(str).apply(lambda x:x.replace('V','').replace(</span></span>
+<span id="cb5-394"><a href="#cb5-394" aria-hidden="true" tabindex="-1"></a><span class="in">      '.0','')).replace('O','')+'-'+</span></span>
+<span id="cb5-395"><a href="#cb5-395" aria-hidden="true" tabindex="-1"></a><span class="in">    excel_df['Test #'].apply(str).apply(</span></span>
+<span id="cb5-396"><a href="#cb5-396" aria-hidden="true" tabindex="-1"></a><span class="in">      lambda x:x.replace('V','').replace('.0',''))</span></span>
+<span id="cb5-397"><a href="#cb5-397" aria-hidden="true" tabindex="-1"></a><span class="in">    excel_df['Test ID'] = excel_df['Sample#']+</span></span>
+<span id="cb5-398"><a href="#cb5-398" aria-hidden="true" tabindex="-1"></a><span class="in">    '-'+excel_df['Retest'].apply(str).apply(</span></span>
+<span id="cb5-399"><a href="#cb5-399" aria-hidden="true" tabindex="-1"></a><span class="in">      lambda x:x.replace('V','').replace('.0',''))</span></span>
+<span id="cb5-400"><a href="#cb5-400" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-401"><a href="#cb5-401" aria-hidden="true" tabindex="-1"></a><span class="in">    #Austin's spreedsheet</span></span>
+<span id="cb5-402"><a href="#cb5-402" aria-hidden="true" tabindex="-1"></a><span class="in">    Austin_spreadsheet =pd.ExcelFile('/home/aml334/CSE_MSE_RXF131/'+</span></span>
+<span id="cb5-403"><a href="#cb5-403" aria-hidden="true" tabindex="-1"></a><span class="in">    'staging/mds3/fractography/MasterSheet_ULI_Ti6Al4V_Fatigue.xlsx')</span></span>
+<span id="cb5-404"><a href="#cb5-404" aria-hidden="true" tabindex="-1"></a><span class="in">    temp_df = pd.DataFrame()</span></span>
+<span id="cb5-405"><a href="#cb5-405" aria-hidden="true" tabindex="-1"></a><span class="in">    for worksheet in ['Fatigue Test Table','K calculation']:</span></span>
+<span id="cb5-406"><a href="#cb5-406" aria-hidden="true" tabindex="-1"></a><span class="in">        if 'Fatigue Test Table' in worksheet:</span></span>
+<span id="cb5-407"><a href="#cb5-407" aria-hidden="true" tabindex="-1"></a><span class="in">            x = pd.read_excel(Austin_spreadsheet,worksheet,skiprows=1)</span></span>
+<span id="cb5-408"><a href="#cb5-408" aria-hidden="true" tabindex="-1"></a><span class="in">            x['Cycles'] = x['Cycles @ Failure']</span></span>
+<span id="cb5-409"><a href="#cb5-409" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-410"><a href="#cb5-410" aria-hidden="true" tabindex="-1"></a><span class="in">        elif 'K calculation' in  worksheet:</span></span>
+<span id="cb5-411"><a href="#cb5-411" aria-hidden="true" tabindex="-1"></a><span class="in">            x = pd.read_excel(Austin_spreadsheet,worksheet,skiprows=0)</span></span>
+<span id="cb5-412"><a href="#cb5-412" aria-hidden="true" tabindex="-1"></a><span class="in">        if 'ID' in x.columns:</span></span>
+<span id="cb5-413"><a href="#cb5-413" aria-hidden="true" tabindex="-1"></a><span class="in">            x['Sample#'] = x['ID'].apply(m)</span></span>
+<span id="cb5-414"><a href="#cb5-414" aria-hidden="true" tabindex="-1"></a><span class="in">        x = x.loc[:, ~x.columns.str.startswith('Unnamed')]</span></span>
+<span id="cb5-415"><a href="#cb5-415" aria-hidden="true" tabindex="-1"></a><span class="in">        temp_df = pd.concat([temp_df,x])</span></span>
+<span id="cb5-416"><a href="#cb5-416" aria-hidden="true" tabindex="-1"></a><span class="in">    del x</span></span>
+<span id="cb5-417"><a href="#cb5-417" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-418"><a href="#cb5-418" aria-hidden="true" tabindex="-1"></a><span class="in">    excel_df = pd.concat([excel_df,output,temp_df])</span></span>
+<span id="cb5-419"><a href="#cb5-419" aria-hidden="true" tabindex="-1"></a><span class="in">    col = excel_df.pop('Sample#')</span></span>
+<span id="cb5-420"><a href="#cb5-420" aria-hidden="true" tabindex="-1"></a><span class="in">    excel_df.insert(0, 'Sample#', col)</span></span>
+<span id="cb5-421"><a href="#cb5-421" aria-hidden="true" tabindex="-1"></a><span class="in">    #Filter Based on Cycles</span></span>
+<span id="cb5-422"><a href="#cb5-422" aria-hidden="true" tabindex="-1"></a><span class="in">    excel_df = excel_df[excel_df['Cycles'].notna()]</span></span>
+<span id="cb5-423"><a href="#cb5-423" aria-hidden="true" tabindex="-1"></a><span class="in">    excel_df['σ (Mpa)']= excel_df['σ max initiation (MPa)']</span></span>
+<span id="cb5-424"><a href="#cb5-424" aria-hidden="true" tabindex="-1"></a><span class="in">    type_counts = excel_df['Cycles'].apply(type).value_counts()</span></span>
+<span id="cb5-425"><a href="#cb5-425" aria-hidden="true" tabindex="-1"></a><span class="in"># Any characters in between (greedy by default)</span></span>
+<span id="cb5-426"><a href="#cb5-426" aria-hidden="true" tabindex="-1"></a><span class="in">    print(type_counts)</span></span>
+<span id="cb5-427"><a href="#cb5-427" aria-hidden="true" tabindex="-1"></a><span class="in">    excel_df = excel_df[excel_df['Cycles'].apply(lambda x: isinstance(x, int) </span></span>
+<span id="cb5-428"><a href="#cb5-428" aria-hidden="true" tabindex="-1"></a><span class="in">    or isinstance(x,float))]</span></span>
+<span id="cb5-429"><a href="#cb5-429" aria-hidden="true" tabindex="-1"></a><span class="in">    excel_df['Cycles'] = excel_df['Cycles'].astype(int)</span></span>
+<span id="cb5-430"><a href="#cb5-430" aria-hidden="true" tabindex="-1"></a><span class="in">    type_counts = excel_df['Cycles'].apply(type).value_counts()</span></span>
+<span id="cb5-431"><a href="#cb5-431" aria-hidden="true" tabindex="-1"></a><span class="in">    print(type_counts)</span></span>
+<span id="cb5-432"><a href="#cb5-432" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-433"><a href="#cb5-433" aria-hidden="true" tabindex="-1"></a><span class="in">    del col</span></span>
+<span id="cb5-434"><a href="#cb5-434" aria-hidden="true" tabindex="-1"></a><span class="in">    del output</span></span>
+<span id="cb5-435"><a href="#cb5-435" aria-hidden="true" tabindex="-1"></a><span class="in">    del Austin_spreadsheet</span></span>
+<span id="cb5-436"><a href="#cb5-436" aria-hidden="true" tabindex="-1"></a><span class="in">    del temp_df</span></span>
+<span id="cb5-437"><a href="#cb5-437" aria-hidden="true" tabindex="-1"></a><span class="in">    # In[12]:</span></span>
+<span id="cb5-438"><a href="#cb5-438" aria-hidden="true" tabindex="-1"></a><span class="in">    name = []</span></span>
+<span id="cb5-439"><a href="#cb5-439" aria-hidden="true" tabindex="-1"></a><span class="in">    column_dict = {}</span></span>
+<span id="cb5-440"><a href="#cb5-440" aria-hidden="true" tabindex="-1"></a><span class="in">    i=0</span></span>
+<span id="cb5-441"><a href="#cb5-441" aria-hidden="true" tabindex="-1"></a><span class="in">    column_list = []</span></span>
+<span id="cb5-442"><a href="#cb5-442" aria-hidden="true" tabindex="-1"></a><span class="in">    for column in condition_list:</span></span>
+<span id="cb5-443"><a href="#cb5-443" aria-hidden="true" tabindex="-1"></a><span class="in">        temp_list = []</span></span>
+<span id="cb5-444"><a href="#cb5-444" aria-hidden="true" tabindex="-1"></a><span class="in">        for top_folder in path_list:</span></span>
+<span id="cb5-445"><a href="#cb5-445" aria-hidden="true" tabindex="-1"></a><span class="in">            temp_list.extend(recursive_search(</span></span>
+<span id="cb5-446"><a href="#cb5-446" aria-hidden="true" tabindex="-1"></a><span class="in">                    column,</span></span>
+<span id="cb5-447"><a href="#cb5-447" aria-hidden="true" tabindex="-1"></a><span class="in">                    top_folder,</span></span>
+<span id="cb5-448"><a href="#cb5-448" aria-hidden="true" tabindex="-1"></a><span class="in">                    temp_list</span></span>
+<span id="cb5-449"><a href="#cb5-449" aria-hidden="true" tabindex="-1"></a><span class="in">                )</span></span>
+<span id="cb5-450"><a href="#cb5-450" aria-hidden="true" tabindex="-1"></a><span class="in">            )# Any characters in between (greedy by default)</span></span>
+<span id="cb5-451"><a href="#cb5-451" aria-hidden="true" tabindex="-1"></a><span class="in">        name.append((column.__name__,len(temp_list)))</span></span>
+<span id="cb5-452"><a href="#cb5-452" aria-hidden="true" tabindex="-1"></a><span class="in">        column_dict[name[i][0]] = temp_list</span></span>
+<span id="cb5-453"><a href="#cb5-453" aria-hidden="true" tabindex="-1"></a><span class="in">        del temp_list</span></span>
+<span id="cb5-454"><a href="#cb5-454" aria-hidden="true" tabindex="-1"></a><span class="in">        print(str(name[i]) +f'\tPosition: {i}')</span></span>
+<span id="cb5-455"><a href="#cb5-455" aria-hidden="true" tabindex="-1"></a><span class="in">        i+=1</span></span>
+<span id="cb5-456"><a href="#cb5-456" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-457"><a href="#cb5-457" aria-hidden="true" tabindex="-1"></a><span class="in">    # In[17]:</span></span>
+<span id="cb5-458"><a href="#cb5-458" aria-hidden="true" tabindex="-1"></a><span class="in">    # In[17]:</span></span>
+<span id="cb5-459"><a href="#cb5-459" aria-hidden="true" tabindex="-1"></a><span class="in">    check = re.compile(r'''</span></span>
+<span id="cb5-460"><a href="#cb5-460" aria-hidden="true" tabindex="-1"></a><span class="in">        ^</span></span>
+<span id="cb5-461"><a href="#cb5-461" aria-hidden="true" tabindex="-1"></a><span class="in">        (?:x)?</span></span>
+<span id="cb5-462"><a href="#cb5-462" aria-hidden="true" tabindex="-1"></a><span class="in">        (?:\d+)?</span></span>
+<span id="cb5-463"><a href="#cb5-463" aria-hidden="true" tabindex="-1"></a><span class="in">        (?:[a-b])?</span></span>
+<span id="cb5-464"><a href="#cb5-464" aria-hidden="true" tabindex="-1"></a><span class="in">        [-]?</span></span>
+<span id="cb5-465"><a href="#cb5-465" aria-hidden="true" tabindex="-1"></a><span class="in">        (?:Copy\ of\ |Overview|_STD_ETD_|Initiation)?  # Optional prefixes</span></span>
+<span id="cb5-466"><a href="#cb5-466" aria-hidden="true" tabindex="-1"></a><span class="in">        [-]?</span></span>
+<span id="cb5-467"><a href="#cb5-467" aria-hidden="true" tabindex="-1"></a><span class="in">        [\d]?</span></span>
+<span id="cb5-468"><a href="#cb5-468" aria-hidden="true" tabindex="-1"></a><span class="in">        [-]?</span></span>
+<span id="cb5-469"><a href="#cb5-469" aria-hidden="true" tabindex="-1"></a><span class="in">        [x]?</span></span>
+<span id="cb5-470"><a href="#cb5-470" aria-hidden="true" tabindex="-1"></a><span class="in">        (?:\d+)?</span></span>
+<span id="cb5-471"><a href="#cb5-471" aria-hidden="true" tabindex="-1"></a><span class="in">        [-]?</span></span>
+<span id="cb5-472"><a href="#cb5-472" aria-hidden="true" tabindex="-1"></a><span class="in">        (EP|NASA|CMU)                                  </span></span>
+<span id="cb5-473"><a href="#cb5-473" aria-hidden="true" tabindex="-1"></a><span class="in">        # Start with EP, NASA, or CMU (case insensitive)</span></span>
+<span id="cb5-474"><a href="#cb5-474" aria-hidden="true" tabindex="-1"></a><span class="in">        [-_]?                                          # Optional separator</span></span>
+<span id="cb5-475"><a href="#cb5-475" aria-hidden="true" tabindex="-1"></a><span class="in">        (\d+|O\d+)                                     </span></span>
+<span id="cb5-476"><a href="#cb5-476" aria-hidden="true" tabindex="-1"></a><span class="in">        # Number or O followed by number</span></span>
+<span id="cb5-477"><a href="#cb5-477" aria-hidden="true" tabindex="-1"></a><span class="in">        [-_]?                                        # Optional separator</span></span>
+<span id="cb5-478"><a href="#cb5-478" aria-hidden="true" tabindex="-1"></a><span class="in">        V?</span></span>
+<span id="cb5-479"><a href="#cb5-479" aria-hidden="true" tabindex="-1"></a><span class="in">        ([E\d]+|\d+)                                   # Version number</span></span>
+<span id="cb5-480"><a href="#cb5-480" aria-hidden="true" tabindex="-1"></a><span class="in">        [-_]?                                          # Optional separator</span></span>
+<span id="cb5-481"><a href="#cb5-481" aria-hidden="true" tabindex="-1"></a><span class="in">        (\d+)?                                         </span></span>
+<span id="cb5-482"><a href="#cb5-482" aria-hidden="true" tabindex="-1"></a><span class="in">        # Optional additional number</span></span>
+<span id="cb5-483"><a href="#cb5-483" aria-hidden="true" tabindex="-1"></a><span class="in">        (?:_MARKED)?                                   </span></span>
+<span id="cb5-484"><a href="#cb5-484" aria-hidden="true" tabindex="-1"></a><span class="in">        # Optional '_MARKED' suffix</span></span>
+<span id="cb5-485"><a href="#cb5-485" aria-hidden="true" tabindex="-1"></a><span class="in">        (.*)?                                          </span></span>
+<span id="cb5-486"><a href="#cb5-486" aria-hidden="true" tabindex="-1"></a><span class="in">        # Any characters in between (greedy by default)</span></span>
+<span id="cb5-487"><a href="#cb5-487" aria-hidden="true" tabindex="-1"></a><span class="in">        \.(png|tif|tiff|jpg)$                          # File extension</span></span>
+<span id="cb5-488"><a href="#cb5-488" aria-hidden="true" tabindex="-1"></a><span class="in">        ''', re.VERBOSE | re.IGNORECASE)</span></span>
+<span id="cb5-489"><a href="#cb5-489" aria-hidden="true" tabindex="-1"></a><span class="in">    def regex_basename(pattern):</span></span>
+<span id="cb5-490"><a href="#cb5-490" aria-hidden="true" tabindex="-1"></a><span class="in">        match = re.search(check,pattern)</span></span>
+<span id="cb5-491"><a href="#cb5-491" aria-hidden="true" tabindex="-1"></a><span class="in">        if(match):</span></span>
+<span id="cb5-492"><a href="#cb5-492" aria-hidden="true" tabindex="-1"></a><span class="in">            type_func = clean_BuildID(match.group(1)+match.group(2))</span></span>
+<span id="cb5-493"><a href="#cb5-493" aria-hidden="true" tabindex="-1"></a><span class="in">            series_func = match.group(3).lstrip("0")</span></span>
+<span id="cb5-494"><a href="#cb5-494" aria-hidden="true" tabindex="-1"></a><span class="in">            if match.group(4):</span></span>
+<span id="cb5-495"><a href="#cb5-495" aria-hidden="true" tabindex="-1"></a><span class="in">                posit_idx_func = match.group(4).lstrip("0")</span></span>
+<span id="cb5-496"><a href="#cb5-496" aria-hidden="true" tabindex="-1"></a><span class="in">            else:# Any characters in between (greedy by default)</span></span>
+<span id="cb5-497"><a href="#cb5-497" aria-hidden="true" tabindex="-1"></a><span class="in">                posit_idx_func = None</span></span>
+<span id="cb5-498"><a href="#cb5-498" aria-hidden="true" tabindex="-1"></a><span class="in">            return type_func, series_func,posit_idx_func</span></span>
+<span id="cb5-499"><a href="#cb5-499" aria-hidden="true" tabindex="-1"></a><span class="in">        else:</span></span>
+<span id="cb5-500"><a href="#cb5-500" aria-hidden="true" tabindex="-1"></a><span class="in">            return None</span></span>
+<span id="cb5-501"><a href="#cb5-501" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-502"><a href="#cb5-502" aria-hidden="true" tabindex="-1"></a><span class="in">    def exclude(input):</span></span>
+<span id="cb5-503"><a href="#cb5-503" aria-hidden="true" tabindex="-1"></a><span class="in">        conditions = ['.hdr', '.csv','.info','.xlsx','.info','.pptx',</span></span>
+<span id="cb5-504"><a href="#cb5-504" aria-hidden="true" tabindex="-1"></a><span class="in">        '.s0001','.zip','.model']</span></span>
+<span id="cb5-505"><a href="#cb5-505" aria-hidden="true" tabindex="-1"></a><span class="in">        for condition in conditions:</span></span>
+<span id="cb5-506"><a href="#cb5-506" aria-hidden="true" tabindex="-1"></a><span class="in">            if condition in input: return True</span></span>
+<span id="cb5-507"><a href="#cb5-507" aria-hidden="true" tabindex="-1"></a><span class="in">        return False</span></span>
+<span id="cb5-508"><a href="#cb5-508" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-509"><a href="#cb5-509" aria-hidden="true" tabindex="-1"></a><span class="in">    def check_regex_basename(dict_to_search,search_function, exclude_conditions):</span></span>
+<span id="cb5-510"><a href="#cb5-510" aria-hidden="true" tabindex="-1"></a><span class="in">        i=0</span></span>
+<span id="cb5-511"><a href="#cb5-511" aria-hidden="true" tabindex="-1"></a><span class="in">        for key in dict_to_search:</span></span>
+<span id="cb5-512"><a href="#cb5-512" aria-hidden="true" tabindex="-1"></a><span class="in">            for field in dict_to_search[key]:</span></span>
+<span id="cb5-513"><a href="#cb5-513" aria-hidden="true" tabindex="-1"></a><span class="in">                basename = field.split('/')[-1]</span></span>
+<span id="cb5-514"><a href="#cb5-514" aria-hidden="true" tabindex="-1"></a><span class="in">                if not search_function(basename) and not exclude(basename):</span></span>
+<span id="cb5-515"><a href="#cb5-515" aria-hidden="true" tabindex="-1"></a><span class="in">                    print(basename)</span></span>
+<span id="cb5-516"><a href="#cb5-516" aria-hidden="true" tabindex="-1"></a><span class="in">                    i+=1</span></span>
+<span id="cb5-517"><a href="#cb5-517" aria-hidden="true" tabindex="-1"></a><span class="in">        print('Unselected files: '+str(i))</span></span>
+<span id="cb5-518"><a href="#cb5-518" aria-hidden="true" tabindex="-1"></a><span class="in">        # In[17]:</span></span>
+<span id="cb5-519"><a href="#cb5-519" aria-hidden="true" tabindex="-1"></a><span class="in">    check = re.compile(r'''</span></span>
+<span id="cb5-520"><a href="#cb5-520" aria-hidden="true" tabindex="-1"></a><span class="in">        ^</span></span>
+<span id="cb5-521"><a href="#cb5-521" aria-hidden="true" tabindex="-1"></a><span class="in">        (?:x)?</span></span>
+<span id="cb5-522"><a href="#cb5-522" aria-hidden="true" tabindex="-1"></a><span class="in">        (?:\d+)?</span></span>
+<span id="cb5-523"><a href="#cb5-523" aria-hidden="true" tabindex="-1"></a><span class="in">        (?:[a-b])?</span></span>
+<span id="cb5-524"><a href="#cb5-524" aria-hidden="true" tabindex="-1"></a><span class="in">        [-]?</span></span>
+<span id="cb5-525"><a href="#cb5-525" aria-hidden="true" tabindex="-1"></a><span class="in">        (?:Copy\ of\ |Overview|_STD_ETD_|Initiation)?  # Optional prefixes</span></span>
+<span id="cb5-526"><a href="#cb5-526" aria-hidden="true" tabindex="-1"></a><span class="in">        [-]?</span></span>
+<span id="cb5-527"><a href="#cb5-527" aria-hidden="true" tabindex="-1"></a><span class="in">        [\d]?</span></span>
+<span id="cb5-528"><a href="#cb5-528" aria-hidden="true" tabindex="-1"></a><span class="in">        [-]?</span></span>
+<span id="cb5-529"><a href="#cb5-529" aria-hidden="true" tabindex="-1"></a><span class="in">        [x]?</span></span>
+<span id="cb5-530"><a href="#cb5-530" aria-hidden="true" tabindex="-1"></a><span class="in">        (?:\d+)?</span></span>
+<span id="cb5-531"><a href="#cb5-531" aria-hidden="true" tabindex="-1"></a><span class="in">        [-]?</span></span>
+<span id="cb5-532"><a href="#cb5-532" aria-hidden="true" tabindex="-1"></a><span class="in">        (EP|NASA|CMU)                                  </span></span>
+<span id="cb5-533"><a href="#cb5-533" aria-hidden="true" tabindex="-1"></a><span class="in">        # Start with EP, NASA, or CMU (case insensitive)</span></span>
+<span id="cb5-534"><a href="#cb5-534" aria-hidden="true" tabindex="-1"></a><span class="in">        [-_]?                                          # Optional separator</span></span>
+<span id="cb5-535"><a href="#cb5-535" aria-hidden="true" tabindex="-1"></a><span class="in">        (\d+|O\d+)                                     </span></span>
+<span id="cb5-536"><a href="#cb5-536" aria-hidden="true" tabindex="-1"></a><span class="in">        # Number or O followed by number</span></span>
+<span id="cb5-537"><a href="#cb5-537" aria-hidden="true" tabindex="-1"></a><span class="in">        [-_]?                                        # Optional separator</span></span>
+<span id="cb5-538"><a href="#cb5-538" aria-hidden="true" tabindex="-1"></a><span class="in">        V?</span></span>
+<span id="cb5-539"><a href="#cb5-539" aria-hidden="true" tabindex="-1"></a><span class="in">        ([E\d]+|\d+)                                   # Version number</span></span>
+<span id="cb5-540"><a href="#cb5-540" aria-hidden="true" tabindex="-1"></a><span class="in">        [-_]?                                          # Optional separator</span></span>
+<span id="cb5-541"><a href="#cb5-541" aria-hidden="true" tabindex="-1"></a><span class="in">        (\d+)?                                         </span></span>
+<span id="cb5-542"><a href="#cb5-542" aria-hidden="true" tabindex="-1"></a><span class="in">        # Optional additional number</span></span>
+<span id="cb5-543"><a href="#cb5-543" aria-hidden="true" tabindex="-1"></a><span class="in">        (?:_MARKED)?                                   </span></span>
+<span id="cb5-544"><a href="#cb5-544" aria-hidden="true" tabindex="-1"></a><span class="in">        # Optional '_MARKED' suffix</span></span>
+<span id="cb5-545"><a href="#cb5-545" aria-hidden="true" tabindex="-1"></a><span class="in">        (.*)?                                          </span></span>
+<span id="cb5-546"><a href="#cb5-546" aria-hidden="true" tabindex="-1"></a><span class="in">        # Any characters in between (greedy by default)</span></span>
+<span id="cb5-547"><a href="#cb5-547" aria-hidden="true" tabindex="-1"></a><span class="in">        \.(png|tif|tiff|jpg)$                          # File extension</span></span>
+<span id="cb5-548"><a href="#cb5-548" aria-hidden="true" tabindex="-1"></a><span class="in">        ''', re.VERBOSE | re.IGNORECASE)</span></span>
+<span id="cb5-549"><a href="#cb5-549" aria-hidden="true" tabindex="-1"></a><span class="in">    def regex_basename(pattern):</span></span>
+<span id="cb5-550"><a href="#cb5-550" aria-hidden="true" tabindex="-1"></a><span class="in">        match = re.search(check,pattern)</span></span>
+<span id="cb5-551"><a href="#cb5-551" aria-hidden="true" tabindex="-1"></a><span class="in">        if(match):</span></span>
+<span id="cb5-552"><a href="#cb5-552" aria-hidden="true" tabindex="-1"></a><span class="in">            type_func = clean_BuildID(match.group(1)+match.group(2))</span></span>
+<span id="cb5-553"><a href="#cb5-553" aria-hidden="true" tabindex="-1"></a><span class="in">            series_func = match.group(3).lstrip("0")</span></span>
+<span id="cb5-554"><a href="#cb5-554" aria-hidden="true" tabindex="-1"></a><span class="in">            if match.group(4):</span></span>
+<span id="cb5-555"><a href="#cb5-555" aria-hidden="true" tabindex="-1"></a><span class="in">                posit_idx_func = match.group(4).lstrip("0")</span></span>
+<span id="cb5-556"><a href="#cb5-556" aria-hidden="true" tabindex="-1"></a><span class="in">            else:</span></span>
+<span id="cb5-557"><a href="#cb5-557" aria-hidden="true" tabindex="-1"></a><span class="in">                posit_idx_func = None</span></span>
+<span id="cb5-558"><a href="#cb5-558" aria-hidden="true" tabindex="-1"></a><span class="in">            return type_func, series_func,posit_idx_func</span></span>
+<span id="cb5-559"><a href="#cb5-559" aria-hidden="true" tabindex="-1"></a><span class="in">        else:</span></span>
+<span id="cb5-560"><a href="#cb5-560" aria-hidden="true" tabindex="-1"></a><span class="in">            return None</span></span>
+<span id="cb5-561"><a href="#cb5-561" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-562"><a href="#cb5-562" aria-hidden="true" tabindex="-1"></a><span class="in">    def exclude(input):</span></span>
+<span id="cb5-563"><a href="#cb5-563" aria-hidden="true" tabindex="-1"></a><span class="in">        conditions = ['.hdr', '.csv','.info','.xlsx','.info','.pptx','.s0001',</span></span>
+<span id="cb5-564"><a href="#cb5-564" aria-hidden="true" tabindex="-1"></a><span class="in">        '.zip','.model']</span></span>
+<span id="cb5-565"><a href="#cb5-565" aria-hidden="true" tabindex="-1"></a><span class="in">        for condition in conditions:</span></span>
+<span id="cb5-566"><a href="#cb5-566" aria-hidden="true" tabindex="-1"></a><span class="in">            if condition in input: return True</span></span>
+<span id="cb5-567"><a href="#cb5-567" aria-hidden="true" tabindex="-1"></a><span class="in">        return False</span></span>
+<span id="cb5-568"><a href="#cb5-568" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-569"><a href="#cb5-569" aria-hidden="true" tabindex="-1"></a><span class="in">    def check_regex_basename(dict_to_search,search_function, exclude_conditions):</span></span>
+<span id="cb5-570"><a href="#cb5-570" aria-hidden="true" tabindex="-1"></a><span class="in">        i=0</span></span>
+<span id="cb5-571"><a href="#cb5-571" aria-hidden="true" tabindex="-1"></a><span class="in">        for key in dict_to_search:</span></span>
+<span id="cb5-572"><a href="#cb5-572" aria-hidden="true" tabindex="-1"></a><span class="in">            for field in dict_to_search[key]:</span></span>
+<span id="cb5-573"><a href="#cb5-573" aria-hidden="true" tabindex="-1"></a><span class="in">                basename = field.split('/')[-1]</span></span>
+<span id="cb5-574"><a href="#cb5-574" aria-hidden="true" tabindex="-1"></a><span class="in">                if no# Any charadef print_column_counts(df,example=0):</span></span>
+<span id="cb5-575"><a href="#cb5-575" aria-hidden="true" tabindex="-1"></a><span class="in">    row_structure = '|{:^50}|{:^10}|{:^10}|{:^10}|{:^15}|'</span></span>
+<span id="cb5-576"><a href="#cb5-576" aria-hidden="true" tabindex="-1"></a><span class="in">    print(row_structure.format('Column name', 'Nulls','Values','Position','Example'))</span></span>
+<span id="cb5-577"><a href="#cb5-577" aria-hidden="true" tabindex="-1"></a><span class="in">    i=0</span></span>
+<span id="cb5-578"><a href="#cb5-578" aria-hidden="true" tabindex="-1"></a><span class="in">    for column in df.columns:</span></span>
+<span id="cb5-579"><a href="#cb5-579" aria-hidden="true" tabindex="-1"></a><span class="in">        nas = df[column].isna().sum()</span></span>
+<span id="cb5-580"><a href="#cb5-580" aria-hidden="true" tabindex="-1"></a><span class="in">        print(row_structure.format(column,str(nas),str(len(df[column])-nas),str(i),str(df[column].iloc[example])[0:15]))</span></span>
+<span id="cb5-581"><a href="#cb5-581" aria-hidden="true" tabindex="-1"></a><span class="in">        i+=1</span></span>
+<span id="cb5-582"><a href="#cb5-582" aria-hidden="true" tabindex="-1"></a><span class="in">print_column_counts(combined_df)cters in between (greedy by default)t search_function(basename) and not exclude(basename):</span></span>
+<span id="cb5-583"><a href="#cb5-583" aria-hidden="true" tabindex="-1"></a><span class="in">                    print(basename)</span></span>
+<span id="cb5-584"><a href="#cb5-584" aria-hidden="true" tabindex="-1"></a><span class="in">                    i+=1</span></span>
+<span id="cb5-585"><a href="#cb5-585" aria-hidden="true" tabindex="-1"></a><span class="in">        print('Unselected files: '+str(i))</span></span>
+<span id="cb5-586"><a href="#cb5-586" aria-hidden="true" tabindex="-1"></a><span class="in">        check_regex_basename(column_dict,regex_basename, exclude)</span></span>
+<span id="cb5-587"><a href="#cb5-587" aria-hidden="true" tabindex="-1"></a><span class="in">    # %%</span></span>
+<span id="cb5-588"><a href="#cb5-588" aria-hidden="true" tabindex="-1"></a><span class="in">    dataframe_list = []</span></span>
+<span id="cb5-589"><a href="#cb5-589" aria-hidden="true" tabindex="-1"></a><span class="in">    for i, key in enumerate(column_dict):</span></span>
+<span id="cb5-590"><a href="#cb5-590" aria-hidden="true" tabindex="-1"></a><span class="in">        type_column = []</span></span>
+<span id="cb5-591"><a href="#cb5-591" aria-hidden="true" tabindex="-1"></a><span class="in">        series_column = []</span></span>
+<span id="cb5-592"><a href="#cb5-592" aria-hidden="true" tabindex="-1"></a><span class="in">        posit_idx_column = []</span></span>
+<span id="cb5-593"><a href="#cb5-593" aria-hidden="true" tabindex="-1"></a><span class="in">        basename = []</span></span>
+<span id="cb5-594"><a href="#cb5-594" aria-hidden="true" tabindex="-1"></a><span class="in">        Sample_num = []</span></span>
+<span id="cb5-595"><a href="#cb5-595" aria-hidden="true" tabindex="-1"></a><span class="in">        path_column = Segment anything will be used [@kirillov_segment_2023]</span></span>
+<span id="cb5-596"><a href="#cb5-596" aria-hidden="true" tabindex="-1"></a><span class="in">[]</span></span>
+<span id="cb5-597"><a href="#cb5-597" aria-hidden="true" tabindex="-1"></a><span class="in">        for j, field in enumerate(column_dict[key]):</span></span>
+<span id="cb5-598"><a href="#cb5-598" aria-hidden="true" tabindex="-1"></a><span class="in">            if regex_basename(field.split('/')[-1]):</span></span>
+<span id="cb5-599"><a href="#cb5-599" aria-hidden="true" tabindex="-1"></a><span class="in">                path_column.append(field)</span></span>
+<span id="cb5-600"><a href="#cb5-600" aria-hidden="true" tabindex="-1"></a><span class="in">                type_inst, series_inst, posit_idx_inst = </span></span>
+<span id="cb5-601"><a href="#cb5-601" aria-hidden="true" tabindex="-1"></a><span class="in">                regex_basename(field.split('/')[-1])</span></span>
+<span id="cb5-602"><a href="#cb5-602" aria-hidden="true" tabindex="-1"></a><span class="in">                type_column.append(type_inst)</span></span>
+<span id="cb5-603"><a href="#cb5-603" aria-hidden="true" tabindex="-1"></a><span class="in">                series_column.append(series_inst)</span></span>
+<span id="cb5-604"><a href="#cb5-604" aria-hidden="true" tabindex="-1"></a><span class="in">                posit_idx_column.append(posit_idx_inst)</span></span>
+<span id="cb5-605"><a href="#cb5-605" aria-hidden="true" tabindex="-1"></a><span class="in">                basename.append(field.split('/')[-1])</span></span>
+<span id="cb5-606"><a href="#cb5-606" aria-hidden="true" tabindex="-1"></a><span class="in">                if posit_idx_iSegment anything will be used [@kirillov_segment_2023]</span></span>
+<span id="cb5-607"><a href="#cb5-607" aria-hidden="true" tabindex="-1"></a><span class="in">nst == None:</span></span>
+<span id="cb5-608"><a href="#cb5-608" aria-hidden="true" tabindex="-1"></a><span class="in">                    Sample_num.append(type_inst.upper()+'-'+</span></span>
+<span id="cb5-609"><a href="#cb5-609" aria-hidden="true" tabindex="-1"></a><span class="in">                    str(series_inst)+'-1')</span></span>
+<span id="cb5-610"><a href="#cb5-610" aria-hidden="true" tabindex="-1"></a><span class="in">                else:</span></span>
+<span id="cb5-611"><a href="#cb5-611" aria-hidden="true" tabindex="-1"></a><span class="in">                    Sample_num.append(type_inst.upper()+'-'+str(series_inst)+</span></span>
+<span id="cb5-612"><a href="#cb5-612" aria-hidden="true" tabindex="-1"></a><span class="in">                    '-'+str(posit_idx_inst))</span></span>
+<span id="cb5-613"><a href="#cb5-613" aria-hidden="true" tabindex="-1"></a><span class="in">        path_column = pd.Series(path_column,name='path')</span></span>
+<span id="cb5-614"><a href="#cb5-614" aria-hidden="true" tabindex="-1"></a><span class="in">        type_column = pd.Series(type_column, name='Build ID')</span></span>
+<span id="cb5-615"><a href="#cb5-615" aria-hidden="true" tabindex="-1"></a><span class="in">        series_column = pd.Series(series_column,name='Build #')</span></span>
+<span id="cb5-616"><a href="#cb5-616" aria-hidden="true" tabindex="-1"></a><span class="in">        posit_idx_column = pd.Series(posit_idx_column,name='Test #')</span></span>
+<span id="cb5-617"><a href="#cb5-617" aria-hidden="true" tabindex="-1"></a><span class="in">        basename_column = pd.Series(basename,name='basename')</span></span>
+<span id="cb5-618"><a href="#cb5-618" aria-hidden="true" tabindex="-1"></a><span class="in">        Sample_num_column= pd.Series(Sample_num, name = 'Sample#')</span></span>
+<span id="cb5-619"><a href="#cb5-619" aria-hidden="true" tabindex="-1"></a><span class="in">        dataframe_list.append(</span></span>
+<span id="cb5-620"><a href="#cb5-620" aria-hidden="true" tabindex="-1"></a><span class="in">            pd.concat(</span></span>
+<span id="cb5-621"><a href="#cb5-621" aria-hidden="true" tabindex="-1"></a><span class="in">                [</span></span>
+<span id="cb5-622"><a href="#cb5-622" aria-hidden="true" tabindex="-1"></a><span class="in">                    Sample_num_column,</span></span>
+<span id="cb5-623"><a href="#cb5-623" aria-hidden="true" tabindex="-1"></a><span class="in">                    path_column,</span></span>
+<span id="cb5-624"><a href="#cb5-624" aria-hidden="true" tabindex="-1"></a><span class="in">                    type_column,</span></span>
+<span id="cb5-625"><a href="#cb5-625" aria-hidden="true" tabindex="-1"></a><span class="in">                    series_column,</span></span>
+<span id="cb5-626"><a href="#cb5-626" aria-hidden="true" tabindex="-1"></a><span class="in">                    posit_idx_column,</span></span>
+<span id="cb5-627"><a href="#cb5-627" aria-hidden="true" tabindex="-1"></a><span class="in">                    basename_column,</span></span>
+<span id="cb5-628"><a href="#cb5-628" aria-hidden="true" tabindex="-1"></a><span class="in">                ],</span></span>
+<span id="cb5-629"><a href="#cb5-629" aria-hidden="true" tabindex="-1"></a><span class="in">                axis=1</span></span>
+<span id="cb5-630"><a href="#cb5-630" aria-hidden="true" tabindex="-1"></a><span class="in">            )</span></span>
+<span id="cb5-631"><a href="#cb5-631" aria-hidden="true" tabindex="-1"></a><span class="in">        )</span></span>
+<span id="cb5-632"><a href="#cb5-632" aria-hidden="true" tabindex="-1"></a><span class="in">        </span></span>
+<span id="cb5-633"><a href="#cb5-633" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-634"><a href="#cb5-634" aria-hidden="true" tabindex="-1"></a><span class="in">    if not os.path.exists(csv_dir):</span></span>
+<span id="cb5-635"><a href="#cb5-635" aria-hidden="true" tabindex="-1"></a><span class="in">        os.makedirs(csv_dir)</span></span>
+<span id="cb5-636"><a href="#cb5-636" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-637"><a href="#cb5-637" aria-hidden="true" tabindex="-1"></a><span class="in">    for i, df in enumerate(dataframe_list):</span></span>
+<span id="cb5-638"><a href="#cb5-638" aria-hidden="true" tabindex="-1"></a><span class="in">        unique_samples = df['Sample#'].drop_duplicates()</span></span>
+<span id="cb5-639"><a href="#cb5-639" aria-hidden="true" tabindex="-1"></a><span class="in">        csv_paths = []</span></span>
+<span id="cb5-640"><a href="#cb5-640" aria-hidden="true" tabindex="-1"></a><span class="in">        for sample in unique_samples:</span></span>
+<span id="cb5-641"><a href="#cb5-641" aria-hidden="true" tabindex="-1"></a><span class="in">            print(sample)</span></span>
+<span id="cb5-642"><a href="#cb5-642" aria-hidden="true" tabindex="-1"></a><span class="in">            sample_df = df[df['Sample#'] == sample]</span></span>
+<span id="cb5-643"><a href="#cb5-643" aria-hidden="true" tabindex="-1"></a><span class="in">            print(sample_df)</span></span>
+<span id="cb5-644"><a href="#cb5-644" aria-hidden="true" tabindex="-1"></a><span class="in">            csv_path = csv_dir+f'/{sample}_'+name[i][0]+'.csv'</span></span>
+<span id="cb5-645"><a href="#cb5-645" aria-hidden="true" tabindex="-1"></a><span class="in">            sample_df.to_csv(csv_path, index=False)</span></span>
+<span id="cb5-646"><a href="#cb5-646" aria-hidden="true" tabindex="-1"></a><span class="in">            csv_paths.append(csv_path)</span></span>
+<span id="cb5-647"><a href="#cb5-647" aria-hidden="true" tabindex="-1"></a><span class="in">        sample_column = pd.Series(unique_samples, name="Sample#")</span></span>
+<span id="cb5-648"><a href="#cb5-648" aria-hidden="true" tabindex="-1"></a><span class="in">        path_column = pd.Series(csv_paths, name="path")</span></span>
+<span id="cb5-649"><a href="#cb5-649" aria-hidden="true" tabindex="-1"></a><span class="in">        new_df = pd.concat([sample_column.reset_index(drop=True),</span></span>
+<span id="cb5-650"><a href="#cb5-650" aria-hidden="true" tabindex="-1"></a><span class="in">        path_column.reset_index(drop=True)],axis=1)</span></span>
+<span id="cb5-651"><a href="#cb5-651" aria-hidden="true" tabindex="-1"></a><span class="in">        dataframe_list[i] = new_df</span></span>
+<span id="cb5-652"><a href="#cb5-652" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-653"><a href="#cb5-653" aria-hidden="true" tabindex="-1"></a><span class="in">    # %%</span></span>
+<span id="cb5-654"><a href="#cb5-654" aria-hidden="true" tabindex="-1"></a><span class="in">    combined_df = excel_df[-excel_df['Sample#'].isna()]</span></span>
+<span id="cb5-655"><a href="#cb5-655" aria-hidden="true" tabindex="-1"></a><span class="in">    # all should have a key column</span></span>
+<span id="cb5-656"><a href="#cb5-656" aria-hidden="true" tabindex="-1"></a><span class="in">    for i, dataframe in enumerate(dataframe_list):</span></span>
+<span id="cb5-657"><a href="#cb5-657" aria-hidden="true" tabindex="-1"></a><span class="in">        # print(combined_df['Sample#']</span></span>
+<span id="cb5-658"><a href="#cb5-658" aria-hidden="true" tabindex="-1"></a><span class="in">        )# Any characters in between (greedy by default)</span></span>
+<span id="cb5-659"><a href="#cb5-659" aria-hidden="true" tabindex="-1"></a><span class="in">        # print(dataframe['Sample#'])</span></span>
+<span id="cb5-660"><a href="#cb5-660" aria-hidden="true" tabindex="-1"></a><span class="in">        # for j in dataframe['path']:</span></span>
+<span id="cb5-661"><a href="#cb5-661" aria-hidden="true" tabindex="-1"></a><span class="in">        # # Any characters in between (greedy by default)</span></span>
+<span id="cb5-662"><a href="#cb5-662" aria-hidden="true" tabindex="-1"></a><span class="in">        #     print(j[-30:])</span></span>
+<span id="cb5-663"><a href="#cb5-663" aria-hidden="true" tabindex="-1"></a><span class="in">        #     pass</span></span>
+<span id="cb5-664"><a href="#cb5-664" aria-hidden="true" tabindex="-1"></a><span class="in">        try:</span></span>
+<span id="cb5-665"><a href="#cb5-665" aria-hidden="true" tabindex="-1"></a><span class="in">            combined_df = pd.merge(combined_df,dataframe,on='Sample#',</span></span>
+<span id="cb5-666"><a href="#cb5-666" aria-hidden="true" tabindex="-1"></a><span class="in">            suffixes=('',f'_{name[i][0]}'),</span></span>
+<span id="cb5-667"><a href="#cb5-667" aria-hidden="true" tabindex="-1"></a><span class="in">            how='outer').drop_duplicates().sort_values(by='Retest',</span></span>
+<span id="cb5-668"><a href="#cb5-668" aria-hidden="true" tabindex="-1"></a><span class="in">            ascending=False).drop_duplicates('Sample#')</span></span>
+<span id="cb5-669"><a href="#cb5-669" aria-hidden="true" tabindex="-1"></a><span class="in">        except Exception as e:</span></span>
+<span id="cb5-670"><a href="#cb5-670" aria-hidden="true" tabindex="-1"></a><span class="in">            print(e)</span></span>
+<span id="cb5-671"><a href="#cb5-671" aria-hidden="true" tabindex="-1"></a><span class="in">    combined_df.rename(columns={'path':'path_'+name[0][0]},inplace=True)</span></span>
+<span id="cb5-672"><a href="#cb5-672" aria-hidden="true" tabindex="-1"></a><span class="in">    combined_df.to_cs# Any characters in between (greedy by default)v('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/'+</span></span>
+<span id="cb5-673"><a href="#cb5-673" aria-hidden="true" tabindex="-1"></a><span class="in">    'fractography/combined_df.csv')</span></span>
+<span id="cb5-674"><a href="#cb5-674" aria-hidden="true" tabindex="-1"></a><span class="in">    log_message(LOG_FILE,str(len(combined_df))+' :'+MESSAGE)</span></span>
+<span id="cb5-675"><a href="#cb5-675" aria-hidden="true" tabindex="-1"></a><span class="in">    row_structure = '|{:^50}|{:^10}|{:^10}|{:^15}|'</span></span>
+<span id="cb5-676"><a href="#cb5-676" aria-hidden="true" tabindex="-1"></a><span class="in">    print(row_structure.format('Column name', 'Nulls','Values','Position'))</span></span>
+<span id="cb5-677"><a href="#cb5-677" aria-hidden="true" tabindex="-1"></a><span class="in">    i=0</span></span>
+<span id="cb5-678"><a href="#cb5-678" aria-hidden="true" tabindex="-1"></a><span class="in">    for column in df.columns:</span></span>
+<span id="cb5-679"><a href="#cb5-679" aria-hidden="true" tabindex="-1"></a><span class="in">        nas = df[column].isna().sum()</span></span>
+<span id="cb5-680"><a href="#cb5-680" aria-hidden="true" tabindex="-1"></a><span class="in">        print(row_structure.format(column,str(nas),str(len(df[column])-nas),</span></span>
+<span id="cb5-681"><a href="#cb5-681" aria-hidden="true" tabindex="-1"></a><span class="in">        str(i)))</span></span>
+<span id="cb5-682"><a href="#cb5-682" aria-hidden="true" tabindex="-1"></a><span class="in">        log_message(LOG_FILE,str(row_structure.format(column,str(nas),</span></span>
+<span id="cb5-683"><a href="#cb5-683" aria-hidden="true" tabindex="-1"></a><span class="in">        str(len(combineSegment anything will be used [@kirillov_segment_2023]</span></span>
+<span id="cb5-684"><a href="#cb5-684" aria-hidden="true" tabindex="-1"></a><span class="in">d_df[column])-nas),str(i))))</span></span>
+<span id="cb5-685"><a href="#cb5-685" aria-hidden="true" tabindex="-1"></a><span class="in">        i+=1</span></span>
+<span id="cb5-686"><a href="#cb5-686" aria-hidden="true" tabindex="-1"></a><span class="in">    # for m, i in combined_df.iterrows():</span></span>
+<span id="cb5-687"><a href="#cb5-687" aria-hidden="true" tabindex="-1"></a><span class="in">    #     if(isinstance(i['path_overload'],str)):</span></span>
+<span id="cb5-688"><a href="#cb5-688" aria-hidden="true" tabindex="-1"></a><span class="in">    #         print(i['Sample#'])</span></span>
+<span id="cb5-689"><a href="#cb5-689" aria-hidden="true" tabindex="-1"></a><span class="in">    #         print(i['path_overload'])</span></span>
+<span id="cb5-690"><a href="#cb5-690" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-691"><a href="#cb5-691" aria-hidden="true" tabindex="-1"></a><span class="in">else:</span></span>
+<span id="cb5-692"><a href="#cb5-692" aria-hidden="true" tabindex="-1"></a><span class="in">    print(__name__+' not being run')</span></span>
+<span id="cb5-693"><a href="#cb5-693" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-694"><a href="#cb5-694" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-695"><a href="#cb5-695" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-696"><a href="#cb5-696" aria-hidden="true" tabindex="-1"></a><span class="fu">### Print Data Counts</span></span>
+<span id="cb5-697"><a href="#cb5-697" aria-hidden="true" tabindex="-1"></a>The below data shows which columns are most common. The most complete columns are Sample#, since that was used to merge the data. The images correspond to the ammount of available data.</span>
+<span id="cb5-700"><a href="#cb5-700" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb5-701"><a href="#cb5-701" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb5-702"><a href="#cb5-702" aria-hidden="true" tabindex="-1"></a><span class="co">#| output: true</span></span>
+<span id="cb5-703"><a href="#cb5-703" aria-hidden="true" tabindex="-1"></a>combined_df <span class="op">=</span> pd.read_csv(<span class="st">'/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/'</span><span class="op">+</span></span>
+<span id="cb5-704"><a href="#cb5-704" aria-hidden="true" tabindex="-1"></a><span class="st">'AdvManu/fractography/combined_df.csv'</span>)</span>
+<span id="cb5-705"><a href="#cb5-705" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-706"><a href="#cb5-706" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> print_column_counts(df,example<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb5-707"><a href="#cb5-707" aria-hidden="true" tabindex="-1"></a>    row_structure <span class="op">=</span> <span class="st">'|</span><span class="sc">{:^50}</span><span class="st">|</span><span class="sc">{:^10}</span><span class="st">|</span><span class="sc">{:^10}</span><span class="st">|</span><span class="sc">{:^10}</span><span class="st">|</span><span class="sc">{:^15}</span><span class="st">|'</span></span>
+<span id="cb5-708"><a href="#cb5-708" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(row_structure.<span class="bu">format</span>(<span class="st">'Column name'</span>, <span class="st">'Nulls'</span>,<span class="st">'Values'</span>,</span>
+<span id="cb5-709"><a href="#cb5-709" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Position'</span>,<span class="st">'Example'</span>))</span>
+<span id="cb5-710"><a href="#cb5-710" aria-hidden="true" tabindex="-1"></a>    i<span class="op">=</span><span class="dv">0</span></span>
+<span id="cb5-711"><a href="#cb5-711" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> column <span class="kw">in</span> df.columns:</span>
+<span id="cb5-712"><a href="#cb5-712" aria-hidden="true" tabindex="-1"></a>        nas <span class="op">=</span> df[column].isna().<span class="bu">sum</span>()</span>
+<span id="cb5-713"><a href="#cb5-713" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(row_structure.<span class="bu">format</span>(column,<span class="bu">str</span>(nas),<span class="bu">str</span>(<span class="bu">len</span>(df[column])<span class="op">-</span>nas),</span>
+<span id="cb5-714"><a href="#cb5-714" aria-hidden="true" tabindex="-1"></a>        <span class="bu">str</span>(i),<span class="bu">str</span>(df[column].iloc[example])[<span class="dv">0</span>:<span class="dv">15</span>]))</span>
+<span id="cb5-715"><a href="#cb5-715" aria-hidden="true" tabindex="-1"></a>        i<span class="op">+=</span><span class="dv">1</span></span>
+<span id="cb5-716"><a href="#cb5-716" aria-hidden="true" tabindex="-1"></a>print_column_counts(combined_df)</span>
+<span id="cb5-717"><a href="#cb5-717" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-718"><a href="#cb5-718" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-719"><a href="#cb5-719" aria-hidden="true" tabindex="-1"></a><span class="fu">### Visualize PV surface</span></span>
+<span id="cb5-722"><a href="#cb5-722" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb5-723"><a href="#cb5-723" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb5-724"><a href="#cb5-724" aria-hidden="true" tabindex="-1"></a><span class="co">#| output: true</span></span>
+<span id="cb5-725"><a href="#cb5-725" aria-hidden="true" tabindex="-1"></a><span class="co"># Lets try to plot the values on PV surface</span></span>
+<span id="cb5-726"><a href="#cb5-726" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure()</span>
+<span id="cb5-727"><a href="#cb5-727" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> fig.add_subplot(projection<span class="op">=</span><span class="st">'3d'</span>)</span>
+<span id="cb5-728"><a href="#cb5-728" aria-hidden="true" tabindex="-1"></a>only_one <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb5-729"><a href="#cb5-729" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, group <span class="kw">in</span> combined_df.groupby([<span class="st">'σ (Mpa)'</span>]):</span>
+<span id="cb5-730"><a href="#cb5-730" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(group)<span class="op">&gt;=</span> <span class="dv">60</span> <span class="kw">and</span> only_one:</span>
+<span id="cb5-731"><a href="#cb5-731" aria-hidden="true" tabindex="-1"></a>        only_one<span class="op">=</span><span class="va">False</span></span>
+<span id="cb5-732"><a href="#cb5-732" aria-hidden="true" tabindex="-1"></a>        ax.scatter(</span>
+<span id="cb5-733"><a href="#cb5-733" aria-hidden="true" tabindex="-1"></a>          group[<span class="st">'Scan Power (W)'</span>],</span>
+<span id="cb5-734"><a href="#cb5-734" aria-hidden="true" tabindex="-1"></a>          group[<span class="st">'Scan velocity (mm/s)'</span>],</span>
+<span id="cb5-735"><a href="#cb5-735" aria-hidden="true" tabindex="-1"></a>          group[<span class="st">'Cycles'</span>])</span>
+<span id="cb5-736"><a href="#cb5-736" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(group[<span class="st">'σ (Mpa)'</span>].iloc[<span class="dv">0</span>])</span>
+<span id="cb5-737"><a href="#cb5-737" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Scan Power (W)'</span>)</span>
+<span id="cb5-738"><a href="#cb5-738" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Scan velocity (mm/s)'</span>)</span>
+<span id="cb5-739"><a href="#cb5-739" aria-hidden="true" tabindex="-1"></a>ax.set_zlabel(<span class="st">'Cycles'</span>)</span>
+<span id="cb5-740"><a href="#cb5-740" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb5-741"><a href="#cb5-741" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-742"><a href="#cb5-742" aria-hidden="true" tabindex="-1"></a><span class="fu"># Citations</span></span>
+</code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
