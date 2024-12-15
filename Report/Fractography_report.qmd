@@ -580,10 +580,10 @@ for ax in g.axes.flatten():
 plt.show()
 ```
 
-```{python, eval=FALSE}
-coefficients, residuals, rank, s = scipy.linalg.lstsq(X, Y)
-coefficients, residuals, rank, s = scipy.linalg.lstsq(X, Y)
-spline = scipy.interpolate.UnivariateSpline(X,Y,s=5)
+Next, the features are being extracted using the initiating_defect_features.py script, which is also included in the appendix
+
+```{python running initiating_defect_features script,eval = FALSE,results='hide'}
+{{< include ../initiating_defect_features.py >}}
 ```
 
 # Citations
