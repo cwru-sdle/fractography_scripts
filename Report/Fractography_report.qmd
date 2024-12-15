@@ -1,15 +1,25 @@
 ---
-title: Fatigue Fracture Surfaces
+title: Predictive Model of Fatigue for Laser Powder Bed Fusion Samples
 date: 2024-10-30
 author:
     name: "Anthony Lino"
     email: aml334@case.edu
     corresponding: true
-format: pdf
+format:
+  html:
+    css: style.css
+    embed-resources: true
+    code-overflow: wrap
+    toc: true
+    toc-depth: 2
+    toc-title: Table of Contents
+    toc-location: body
 bibliography: references.bib
 csl: ieee.csl
 css: style.css
 ---
+
+# Excuetive Summary
 
 # Abstract
 
@@ -39,6 +49,7 @@ knitr::include_graphics("Figures/Crack-growth-curve-for-three-crack-propagation-
 Laser Powder Bed Fusion is (LPBF) an emerging manufacturing method which allows for straightforward small batch manufacturing of complex designs. The ease of manufacturing small batches and the high design freedom allows for high performance designs. This makes it particularly well suited for adoption in the Aerospace industry. However, fatigue performance is a key metric in the Aerospace industry since cyclic loading is ubiquitous in Aerospace applications. This is problematic because LPBF inherently causes a rough surface and defects, which cause poor fatigue properties. A rough surface can be polished, but defects can be embedded below the surface, making them significantly harder to fix. The number of defects can be reduced by optimizing the settings used for printing, but that can be a very time consuming process. As a result, most studies focusing on process parameter optimization rely on these easier tests, leaving a gap in the literature for studies on fatigue optimization. A study in Professor Lewandowski’s lab addressed this by tested the impact of different processing parameters on the fatigue properties. After fracture, the fractured surfaces were imaged under a microscope, revealing the impact of different defects.
 
 ## Quantitative Fractography
+
 Fractography is the study of fracture surfaces. This is a largely qualitative field, but there is a emerging field of quantitative fractography which relies on segmenting these images, and then extracting features from these masks. The Lewandowski lab explored the use of quantitative fractography for these images by performing 4 tasks:
 
 1. Segmenting every defect from the fracture surface
@@ -49,6 +60,7 @@ Fractography is the study of fracture surfaces. This is a largely qualitative fi
 While significant efforts were made, this is a time consuming process, it can take upwards of 4 hours for a single sample, making use of the entire dataset unfeasible. The existing manually annotated data can be used to train machine learning models to perform this segmentation task on the remainder of the data, allowing conclusions to be drawn on the remainder of the data. This is the primary task done in the remainder of this data.
 
 # Data Science Methods
+
 Machine learning is used to segment defects and interesting characteristics from the images.
 Hypothesis testing is used to show the correlation between the extracted defects and the resulting mechanical properties.
 
@@ -114,16 +126,21 @@ The full data cleaning and formation of the combined_df can be seen in organize_
 
 ## Dataset Counts
 
-The most important part of this output is the amount of images in the path files. Among the raw images there are 475 high resolution images of the initiating defect and 496 low resolution images of the entire fracture surface. There are far fewer labeled images than unlabeled images.
-
 ```{python import data,error=FALSE}
 combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
 organize_data.print_column_counts(combined_df)
 print(combined_df['image_class'].value_counts())
+print('Unique samples:' +str(combined_df['sample_id'].nunique()))
+with_polygon_df = combined_df[~combined_df['points'].isna()]
+with_polygon_df['image_class'].value_counts()
+with_polygon_df['sample_id'].value_counts().head(10)
 ```
+
 ## Difference in Cycles to Failure
+
 Below is a histogram and and scatter plot of the difference of two samples which had identical manufacturing and testing conditions. While this is a 
-```{python parameters vs cycles,echo = FALSE,error=FALSE,results='hide'}
+
+```{python parameters vs cycles,error=FALSE,results='hide'}
 xy_df = combined_df[~combined_df['energy_density_J_mm3'].isna() & ~combined_df['cycles'].isna()]
 plt.rcParams.update({'font.size': 32})  # Set font size for all elements
 hist_x = []
@@ -147,12 +164,14 @@ x = np.linspace(20, 120, 100)
 ax2.plot(x, slope * x + intercept, label=f'Linear fit: y = {slope:.2f}x + {intercept:.2f}', color='red')
 ax2.set_ylabel('log(Cycles)*log(stress [Mpa])')
 ax2.set_xlabel('Energy Density [J/mm^3]')
+ax2.text(ax2.get_xlim()[1],ax2.get_ylim()[1],f"R^2={r_value:.2f}", fontsize = 24,ha='right', va='top')
 plt.tight_layout(h_pad=3)
 plt.show()
-print("Linear regression R squared value: "+str(r_value))
 ```
+
 The above figures show that the spreadsheets do not contain all of the necessary information, and from theory, we know that defects may be a leading cause. This is commonly visualized using log(stress) vs log(cycle) (SN) plots. We can also color the points according to their energy density.
-```{python SN curve,echo = FALSE,error=FALSE,results='hide'}
+
+```{python SN curve,error=FALSE,results='hide'}
 cmap = plt.get_cmap('inferno')
 
 fig, (ax_scatter,ax_hist_x) = plt.subplots(2,1,figsize=(14,10),height_ratios=[3,1])
@@ -175,12 +194,18 @@ ax_hist_x.set_xlabel("log(Cycles)")
 plt.subplots_adjust(hspace=0)
 plt.show()
 ```
+
 Doing this, we can see that that the purple points, which is the samples with the most energy that have keyhold defects, were generally tested at a lower stress and failed with few cycles, while those with the least energy that have lack of fusion defects failed at higher stress with few cycles. The strongest samples, those tested at the highest stress and lasted the longest tend to be shades of orange. However, we can again see a lot of noise with some purple and yellow points being almost as strong as the other samples.
 
 # Statistical Learning
-## Fatigue Region
+
+## Fatigue Ratio
+
+### Segmenting Fatigue Region
+
 The fatigue region was selected as the first segmentation task because it is correlated with the fracture toughness, which is determined by the micro structure, which is otherwise unaccounted for. Since a tough micro structure is known to inhibit fatigue crack growth, this is a good candidate for a predictor of Cycles to failure difference. Additionally, the fatigue region is the largest part of the image and is the cleanest of the columns, so is the easiest to work with.
-The below script was used to train a unet model on segmenting the fatigue region. Data augmentation was used to make the most of the small dataset. Since all stitched images are of different sizes, the first augmentation must standardize the size. The result was very successful. Initially, a randomized crop of the desired size was used, since that allows for a significantly larger and more diverse dataset than a more traditional resize. However, results in figure 3 show that the model's training loss did not decrease with epochs, suggesting that the model is incapable of completing this task. All augmentations to the data were investigated, and the result was isolated to the random crop. A training loop with a resize transformation was used instead, shown in figure 4, and the training loss did decrease, though over training was a significant issue.  This implies that the relationship of far away pixels is important for performing this task. Self-attention layers are known for their ability to learn global information, so AttentionUnet, a unet architecture which incorporates self-attention layers in skip connections was used, and it significantly outperformed the unet model with the same number of epochs and ultimately converged to a significantly lower training loss. Additionally, the wide interquartile range in both figure 3 and 4 was caused by a single mislabeled image. A well optimized training loop with the mislabeled data point corrected is shown in figure 5 and 6 for u-net and attention unet respectively.
+The fatigue_training.py is the full training script and is attatched as an appendix. Data augmentation was used to make the most of the small dataset. Since all stitched images are of different sizes, the first augmentation must standardize the size. The result was very successful. Initially, a randomized crop of the desired size was used, since that allows for a significantly larger and more diverse dataset than a more traditional resize. However, results in figure 3 show that the model's training loss did not decrease with epochs, suggesting that the model is incapable of completing this task. All augmentations to the data were investigated, and the result was isolated to the random crop. A training loop with a resize transformation was used instead, shown in figure 4, and the training loss did decrease, though over training was a significant issue.  This implies that the relationship of far away pixels is important for performing this task. Self-attention layers are known for their ability to learn global information, so AttentionUnet, a unet architecture which incorporates self-attention layers in skip connections was used, and it significantly outperformed the unet model with the same number of epochs and ultimately converged to a significantly lower training loss. Additionally, the wide interquartile range in both figure 3 and 4 was caused by a single mislabeled image. A well optimized training loop with the mislabeled data point corrected is shown in figure 5 and 6 for u-net and attention unet respectively.
+
 ```{r resize,out.width="100%"}
 #| echo: false
 #| fig-cap: "Model Training"
@@ -188,7 +213,13 @@ knitr::opts_chunk$set(fig.width = 8, fig.height = 6)
 knitr::include_graphics("Figures/model_training.png")
 ```
 
-## Segment Anything Model on Initiating Defect
+### Segmenting Entire Surface
+
+While we can segment the entire fatigue region, we need to account for the different magnification used during the imaging process. Instead of directly comparing the amount of pixels in the fatigue region between different samples, we can find the ratio of pixels in the fatigue region to the entire surface and use that ratio to compare different samples. This was done in the SAM_entire_surface.py script, which is in the appendix.
+
+## Initiating Defect
+
+### Inability to Automatically Segment
 
 ```{r SAM works figure,out.width="100%"}
 #| echo: false
@@ -199,17 +230,9 @@ knitr::include_graphics("Figures/SAM_webpage.png")
 
 Figure 7 shows the segment anything model being used through it's webpage to segment an example initiating defect image. Based on this result, the surface can be segmented with a square of centralized points and the initiating defect is the largest defect inside of this surface. However, this is a high resolution image with good contrast between the surface, the foreground and the defect. An attempt was made to do this automatically, which was ultimately unsuccessful, so all images were labeled manually. The segmented results are saved as polygons whose points are in the points column of the dataframe.
 
-The columns which were segmented.
+### Supervised Segmentation
 
-```{python importing points}
-points_df = combined_df[~combined_df['points'].isna()]
-points_df['image_class'].value_counts()
-points_df['sample_id'].value_counts().head(10)
-for group_string, group in points_df.groupby("sample_id"):
-    imgs = group['image_path'].apply(cv2.imread)
-    # point_lists = group['image_path'].apply(ast.literal_eval)
-    
-```
+The columns which were segmented.
 
 ```{python extacting initiating defect features,echo = FALSE,error=FALSE,results='hide',eval=FALSE}
 x_SAM_process = []
@@ -256,7 +279,6 @@ plt.xlabel('Cycles')
 plt.ylabel('Test Stress (MPa)')
 plt.title('Test Variables')
 plt.legend()
-
 plt.tight_layout()
 plt.show()
 ```
@@ -341,46 +363,18 @@ else:
     print("Fail to reject the null hypothesis: distributions are the same")
 ```
 
-### Sharpness
+### Evaluating Features
+
+```{r Metrics explination figure,out.width="100%"}
+#| echo: false
+#| fig-cap: "Well Optimized Attention Unet Architecture"
+knitr::opts_chunk$set(fig.width = 8, fig.height = 6)
+knitr::include_graphics("Figures/Sharpness_fig.png")
+```
 
 From knowledge of fracture mechanics, we know there is a link between the shape of the initiating defect and the resulting fatigue properties, so it should be possible to extract features from these images which predict fatigue performance. The most common feature is the aspect ratio. However, as shown in figure 8, shape 1 and 3 have similar aspect ratio, but shape 1 should create a significantly worse concentrating factor because of the sharp edge in the bottom right corner. Sharpness measures the change in radial distance from the centroid, which better captures these sharp edges, as can be seen by the high value for both shape 1 and 2. 
 
 ```{python sharpness function}
-def find_sharpness(numpy_array):
-    #Convert array to dataframe
-    y,x= np.nonzero(numpy_array)
-    df = pd.DataFrame({'x':x,'y':y})
-    x0 = df['x'].sum()/df['x'].count()
-    y0 = df['y'].sum()/df['y'].count()
-    #Calculate polar coordinates
-    df['x_rel'] = df['x'] - x0
-    df['y_rel'] = df['y'] - y0
-    df['angle'] = df.apply(lambda row:math.atan(row['y_rel']/row['x_rel']),axis=1)
-    df['distance'] = df.apply(lambda row:math.sqrt(row['y_rel']**2 + row['x_rel']**2),axis=1)
-    global_max = df['distance'].max()
-    #Find max for each bin
-    num_bins = 180
-    bin_edges = np.linspace(-math.pi/2, math.pi/2, num_bins + 1)
-    bins = pd.IntervalIndex.from_breaks(bin_edges,name='Angle_bin')
-    df.index = pd.cut(df['angle'],bins)
-    max_df = df.groupby(level=0,observed=False)['distance'].max()
-    max_diff = []
-    for i in range(0,len(max_df)-2):
-        max_diff.append(abs(max_df.iloc[i]-max_df.iloc[i+1])/global_max)
-
-    return max_diff
-def calculate_aspect_ratio(mask):
-    # Find the non-zero mask coordinates
-    y_coords, x_coords = np.where(mask > 0)
-    
-    # Calculate the bounding box dimensions
-    height = y_coords.max() - y_coords.min() + 1
-    width = x_coords.max() - x_coords.min() + 1
-    
-    # Calculate the aspect ratio
-    aspect_ratio = width / height
-    return aspect_ratio
-
 def invert_colors(image):
     #From claude 3 Haiku
     """
@@ -396,13 +390,6 @@ def invert_colors(image):
 img_1 = invert_colors(cv2.imread('img_1.png',cv2.IMREAD_GRAYSCALE))
 img_2 = invert_colors(cv2.imread('img_2.png',cv2.IMREAD_GRAYSCALE))
 img_3 = invert_colors(cv2.imread('img_3.png',cv2.IMREAD_GRAYSCALE))
-```
-
-```{r Metrics explination figure,out.width="100%"}
-#| echo: false
-#| fig-cap: "Well Optimized Attention Unet Architecture"
-knitr::opts_chunk$set(fig.width = 8, fig.height = 6)
-knitr::include_graphics("Figures/Sharpness_fig.png")
 ```
 
 ```{python loading SAM segmentation of surface}
@@ -442,7 +429,7 @@ for group_string, group in combined_df.groupby('sample_id'):
 ```
 
 
-```{python correlation plot,echo=FALSE,results='hide'}
+```{python correlation plot,echo=FALSE,results='hide', eval = FALSE}
 def process_mask(mask):
     # Find connected components
     num_labels, labels = cv2.connectedComponents(mask)
@@ -536,12 +523,12 @@ def calculate_aspect_ratio_rotated(binary_image):
     
     return aspect_ratio
 
-points_df = combined_df[~combined_df['points'].isna()]
+with_polygon_df = combined_df[~combined_df['points'].isna()]
 imgs = []
 energy = []
 stress = []
-print(points_df.columns)
-for row in points_df.iterrows():
+print(with_polygon_df.columns)
+for row in with_polygon_df.iterrows():
     imgs.append(
         extract_largest_object(
             cv2.imread(row[1]['image_path']),
@@ -559,7 +546,7 @@ pixels = joblib.Parallel(n_jobs=-1)(joblib.delayed(lambda x: x.sum() / x.max())(
 pixel_perimeter_ratio = joblib.Parallel(n_jobs=-1)(joblib.delayed(lambda x: x.sum() / (x.max() * get_perimeter(x)))(x) for x in imgs)
 ```
 
-```{python}
+```{python, eval=FALSE}
 data = {
     "screen_portion": portion_of_screen,
     "max_sharpness": max_sharpness,
@@ -593,10 +580,39 @@ for ax in g.axes.flatten():
 plt.show()
 ```
 
-```{python}
+```{python, eval=FALSE}
 coefficients, residuals, rank, s = scipy.linalg.lstsq(X, Y)
 coefficients, residuals, rank, s = scipy.linalg.lstsq(X, Y)
 spline = scipy.interpolate.UnivariateSpline(X,Y,s=5)
 ```
 
 # Citations
+
+::: {#refs}
+:::
+
+# Appendix
+
+## organize_data.py
+
+```{python, eval = FALSE}
+{{< include ../organize_data.py >}}
+```
+
+## fatigue_training.py
+
+```{python, eval = FALSE}
+{{< include ../fatigue_training.py >}}
+```
+
+## SAM_entire_surface.py
+
+```{python, eval = FALSE}
+{{< include ../SAM_entire_surface.py >}}
+```
+
+## initiating_defect_features.py
+
+```{python, eval = FALSE}
+{{< include ../initiating_defect_features.py >}}
+```
