@@ -15,7 +15,7 @@ import sklearn.model_selection
 import sklearn.preprocessing
 import sklearn.pipeline
 import itertools
-
+sns.set(font_scale=1.5)
 # %%
 '''Functions'''
 def process_mask(mask):

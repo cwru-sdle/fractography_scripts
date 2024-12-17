@@ -29,7 +29,7 @@ css: style.css
     - Hypothesis testing to correlate defect features with mechanical properties
 - Key Findings:
     - Developed predictive model with polynomial regression
-    - Achieved R² of 0.44
+    - Achieved R² of 0.465
     - Demonstrated marginal improvement in prediction of cycles to failure through extracted features
 
 # Abstract
@@ -101,8 +101,7 @@ Hypothesis testing is used to show the correlation between the extracted defects
 
 organize_data is a script used to create the dataframe used in the rest of the report. It is imported here because some functions used to organize the data are also helpful in analysis.
 
-```{python package import}
-#| echo: true
+```{python package import,echo=TRUE}
 import os
 import sys
 import cv2
@@ -147,7 +146,7 @@ The full data cleaning and formation of the combined_df can be seen in organize_
 
 ## Dataset Counts
 
-```{python import data,error=FALSE}
+```{python import data,error=FALSE,echo=TRUE}
 combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
 organize_data.print_column_counts(combined_df)
 print(combined_df['image_class'].value_counts())
@@ -161,7 +160,7 @@ with_polygon_df['sample_id'].value_counts().head(10)
 
 Below is a histogram and and scatter plot of the difference of two samples which had identical manufacturing and testing conditions. While this is a 
 
-```{python parameters vs cycles,error=FALSE,results='hide'}
+```{python parameters vs cycles,error=FALSE,results='hide',echo=TRUE}
 xy_df = combined_df[~combined_df['energy_density_J_mm3'].isna() & ~combined_df['cycles'].isna()]
 plt.rcParams.update({'font.size': 32})  # Set font size for all elements
 hist_x = []
@@ -181,7 +180,7 @@ box_ax.boxplot(hist_x)
 box_fig.show()
 ```
 
-```{python,error=FALSE,results='hide'}
+```{python cucles vs energy density,error=FALSE,results='hide',echo=TRUE}
 xy_df['cycles_stress'] = xy_df['cycles'].apply(lambda x: math.log(x))*xy_df['test_stress_Mpa']
 SN_fig, SN_ax = plt.subplots(figsize=(16, 8))
 SN_ax.scatter(xy_df['energy_density_J_mm3'],xy_df['cycles_stress'])
@@ -197,7 +196,7 @@ SN_fig.show()
 
 The above figures show that the spreadsheets do not contain all of the necessary information, and from theory, we know that defects may be a leading cause. This is commonly visualized using log(stress) vs log(cycle) (SN) plots. We can also color the points according to their energy density.
 
-```{python SN curve,error=FALSE,results='hide'}
+```{python SN curve,error=FALSE,results='hide',echo=TRUE}
 cmap = plt.get_cmap('inferno')
 
 fig, (ax_scatter,ax_hist_x) = plt.subplots(2,1,figsize=(14,10),height_ratios=[3,1])
@@ -249,7 +248,7 @@ While we can segment the entire fatigue region, we need to account for the diffe
 
 ### Inability to Automatically Segment
 
-```{r SAM works figure,out.width="100%"}
+```{r X-AnyLabeling Figure,out.width="100%"}
 #| echo: false
 #| fig-cap: "Example Shown for SAM Model"
 knitr::opts_chunk$set(fig.width = 8, fig.height = 6)
@@ -260,9 +259,16 @@ Figure 7 shows the segment anything model being used through it's webpage to seg
 
 ### Supervised Segmentation
 
-The columns which were segmented.
+```{r SAM works figure,out.width="100%"}
+#| echo: false
+#| fig-cap: "Example Use of X-AnyLabeling"
+knitr::opts_chunk$set(fig.width = 8, fig.height = 6)
+knitr::include_graphics("Figures/X-AnyLabeling.png")
+```
 
-```{python extacting initiating defect features,echo = FALSE,error=FALSE,results='hide',eval=FALSE}
+Segmentation of the initiating defect was performed with X-AnyLabeling, an example of which is shown above. However, not all of the samples were able to be successfully segmented. Based on the figures below, these do not seem to be correlated to the process parameters, which is surprising, since the lack of fusion defects are substantially more complex than the keyhole or gas pores.
+
+```{python extacting initiating defect features,echo = FALSE,error=FALSE,results='hide'}
 x_SAM_process = []
 y_SAM_process = []
 x_SAM_test = []
@@ -287,31 +293,30 @@ for group_string, group in combined_df.groupby('sample_id'):
 
 def jitter(arr, jitter_amount=2):
     return arr + np.random.uniform(-jitter_amount, jitter_amount, len(arr))
-
-plt.figure(figsize=(10, 5))
+  
+success_scatter_fig,(SN_axs,PV_axs) = plt.subplots(2,1,figsize=(14,10))
+plt.figure(figsize=(14, 10))
 
 # Process Variables Plot
-plt.subplot(1, 2, 1)
-plt.scatter(jitter(x_not_SAM_process), jitter(y_not_SAM_process), color='red', label='No Points', alpha=0.7)
-plt.scatter(jitter(x_SAM_process), jitter(y_SAM_process), color='blue', label='With Points', alpha=0.7)
-plt.xlabel('Scan Velocity (mm/s)')
-plt.ylabel('Scan Power (W)')
-plt.title('Process Variables')
-plt.legend()
+SN_axs.scatter(jitter(x_not_SAM_process), jitter(y_not_SAM_process), color='red', label='No Points', alpha=0.7)
+SN_axs.scatter(jitter(x_SAM_process), jitter(y_SAM_process), color='blue', label='With Points', alpha=0.7)
+SN_axs.set_xlabel('Scan Velocity (mm/s)',fontsize=16)
+SN_axs.set_ylabel('Scan Power (W)',fontsize=16)
+SN_axs.set_title('Process Variables',fontsize=24)
+SN_axs.legend(fontsize=24)
 
 # Test Variables Plot
-plt.subplot(1, 2, 2)
-plt.scatter(jitter(x_not_SAM_test), jitter(y_not_SAM_test), color='red', label='No Points', alpha=0.7)
-plt.scatter(jitter(x_SAM_test), jitter(y_SAM_test), color='blue', label='With Points', alpha=0.7)
-plt.xlabel('Cycles')
-plt.ylabel('Test Stress (MPa)')
-plt.title('Test Variables')
-plt.legend()
-plt.tight_layout()
-plt.show()
+PV_axs.scatter(jitter(x_not_SAM_test), jitter(y_not_SAM_test), color='red', label='No Points', alpha=0.7)
+PV_axs.scatter(jitter(x_SAM_test), jitter(y_SAM_test), color='blue', label='With Points', alpha=0.7)
+PV_axs.set_xlabel('Cycles',fontsize=16)
+PV_axs.set_ylabel('Test Stress (MPa)',fontsize=16)
+PV_axs.set_title('Test Variables',fontsize=24)
+PV_axs.legend(fontsize=16)
+success_scatter_fig.tight_layout()
+success_scatter_fig.show()
 ```
 
-```{python SAM success vs Process Parameters,echo = FALSE,error=FALSE,results='hide',eval=FALSE}
+```{python SAM success vs Process Parameters,echo = FALSE,error=FALSE,results='hide'}
 SAM_process = []
 SAM_test = []
 not_SAM_process = []
@@ -324,16 +329,16 @@ for group_string, group in combined_df.groupby('sample_id'):
             not_SAM_process.append(no_points['energy_density_J_mm3'].iloc[0])
         elif  len(points.index)>=1:
             SAM_process.append(points['energy_density_J_mm3'].iloc[0])
+plt.rcParams.update({'font.size': 32})  # Set font size for all elements
 plt.figure(figsize=(10, 5))
 
 # Process Variables Histograms
-plt.subplot(1, 2, 1)
 plt.hist(x_not_SAM_process, bins='auto', color='red', alpha=0.7, label='No Points')
 plt.hist(x_SAM_process, bins='auto', color='blue', alpha=0.7, label='With Points')
-plt.xlabel('Energy Desnity [J/mm^3]')
-plt.ylabel('Frequency')
-plt.title('Process Variables')
-plt.legend()
+plt.xlabel('Energy Density [J/mm^3]',fontsize=16)
+plt.ylabel('Frequency',fontsize=16)
+plt.title('Process Variables',fontsize=24)
+plt.legend(fontsize=16)
 plt.show()
 
 x_not_SAM_process = np.array(x_not_SAM_process)
@@ -342,7 +347,9 @@ x_not_SAM_process = x_not_SAM_process[~np.isnan(x_not_SAM_process)]
 x_SAM_process = x_SAM_process[~np.isnan(x_SAM_process)]
 
 statistic, p_value = scipy.stats.ks_2samp(np.array(x_not_SAM_process),np.array(x_SAM_process))
+```
 
+```{python,echo=TRUE}
 print("P value: "+str(p_value))
 if p_value < 0.05:
     print("Reject the null hypothesis: distributions are different")
@@ -350,7 +357,9 @@ else:
     print("Fail to reject the null hypothesis: distributions are the same")
 ```
 
-```{python SAM success vs testing variables,echo = FALSE,error=FALSE,results='hide',eval=FALSE}
+The hypothesis test is narrowly failed, so the success and failure rate distributions accross the processing parameters are not significantly different.
+
+```{python SAM success vs testing variables,echo = FALSE,error=FALSE,results='hide'}
 x_SAM_test = []
 x_not_SAM_test = []
 for group_string, group in combined_df.groupby('sample_id'):
@@ -365,16 +374,17 @@ for group_string, group in combined_df.groupby('sample_id'):
             cycles =points['cycles'].iloc[0]
             stress =points['test_stress_Mpa'].iloc[0]
             x_SAM_test.append(math.log(cycles)*math.log(stress))
+plt.rcParams.update({'font.size': 32})  # Set font size for all elements
 plt.figure(figsize=(10, 5))
 
 # Process Variables Histograms
 plt.subplot(1, 2, 1)
 plt.hist(x_not_SAM_test, bins='auto', color='red', alpha=0.7, label='No Points')
 plt.hist(x_SAM_test, bins='auto', color='blue', alpha=0.7, label='With Points')
-plt.xlabel('log(cycles)*los(stress [Mpa])')
-plt.ylabel('Frequency')
-plt.title('Testing Variables')
-plt.legend()
+plt.xlabel('log(cycles)*los(stress [Mpa])',fontsize=16)
+plt.ylabel('Frequency',fontsize=16)
+plt.title('Testing Variables',fontsize=20)
+plt.legend(fontsize=16)
 plt.show()
 
 x_not_SAM_test = np.array(x_not_SAM_test)
@@ -383,13 +393,17 @@ x_not_SAM_test = x_not_SAM_test[~np.isnan(x_not_SAM_test)]
 x_SAM_test = x_SAM_test[~np.isnan(x_SAM_test)]
 
 statistic, p_value = scipy.stats.ks_2samp(np.array(x_not_SAM_test),np.array(x_SAM_test))
+```
 
+```{python,echo=TRUE}
 print("P value: "+str(p_value))
 if p_value < 0.05:
     print("Reject the null hypothesis: distributions are different")
 else:
     print("Fail to reject the null hypothesis: distributions are the same")
 ```
+
+The hypothesis test is again narrowly failed, so the success and failure rate distributions accross the testing conditions are not significantly different.
 
 ### Evaluating Features
 
@@ -402,7 +416,7 @@ knitr::include_graphics("Figures/Sharpness_fig.png")
 
 From knowledge of fracture mechanics, we know there is a link between the shape of the initiating defect and the resulting fatigue properties, so it should be possible to extract features from these images which predict fatigue performance. The most common feature is the aspect ratio. However, as shown in figure 8, shape 1 and 3 have similar aspect ratio, but shape 1 should create a significantly worse concentrating factor because of the sharp edge in the bottom right corner. Sharpness measures the change in radial distance from the centroid, which better captures these sharp edges, as can be seen by the high value for both shape 1 and 2. 
 
-```{python initiating_defect_features}
+```{python initiating_defect_features,echo=TRUE,error=FALSE}
 {{< include ../initiating_defect_features.py >}}
 ```
 
