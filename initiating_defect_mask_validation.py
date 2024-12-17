@@ -77,11 +77,13 @@ def process_row(row):
             point_labels=np.array([1])
         )
         return output[0]
-    except error:
+    except Exception as e:
         print(row.index)
+        print(e)
         return False
 def process_mask(mask):
     # Find connected components
+    mask = np.array(mask, dtype=np.uint8)
     num_labels, labels = cv2.connectedComponents(mask)
     
     # Count components (excluding background)
@@ -134,8 +136,13 @@ if __name__=="__main__":
     best_rows = []
     for group_string, group in df.groupby(by="sample_id"):
         try:
-            group['SAM_output'] =df.apply(process_row,axis=1).apply(process_mask)
+            print(group_string+" running")
+            group['temp'] =df.apply(process_row,axis=1)     
+            print("row processed")       
+            group['SAM_output'] =df.apply(process_mask)
+            print("SAM output found")
             group["cross_entropy"] = df.apply(lambda x: torch.nn.functional.binary_cross_entropy(x['imgs'],x['SAM_output']),axis=1)
+            print("cross entropy found")
             best_rows.append(
                 group.loc[group['cross_entropy'].idxmin()]
             )

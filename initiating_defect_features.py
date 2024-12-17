@@ -324,8 +324,9 @@ if __name__=="__main__":
     columns = ["screen_portion","max_sharpness","aspect_ratio","perimeter","pixels"]
     df[columns] = df[columns].replace([np.inf, -np.inf], np.nan)
     df = df.dropna()
-    plot = plot_feature_df(df[columns])
     results_df = regression_on_df(df)
-    print(results_df)
+    print(results_df.loc[results_df["r2"].idxmax()])
+    print(results_df.loc[results_df[(results_df['aspect_ratio']==False) &(results_df['sharpness']==False)]["r2"].idxmax()])    
+    plot = plot_feature_df(df[columns])
 else:
     print(__name__+" functions loaded")

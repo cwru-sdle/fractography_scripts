@@ -21,7 +21,24 @@ css: style.css
 
 # Excuetive Summary
 
+- Research Objective:
+    - Develop a predictive model for fatigue performance in Laser Powder Bed Fusion (LPBF) samples
+    - Address literature gap in process parameter optimization for fatigue properties
+- Approach:
+    - Segmentation of the initiating defect with Meta's Segment Anything Model 
+    - Hypothesis testing to correlate defect features with mechanical properties
+- Key Findings:
+    - Developed predictive model with polynomial regression
+    - Achieved R² of 0.44
+    - Demonstrated marginal improvement in prediction of cycles to failure through extracted features
+
 # Abstract
+
+Fatigue is a well-known failure mechanism for commercial equipment, where a material fails over a period of time due to a progressive deterioration, through high and low stress cycles. Laser Powder Bed Fusion (LPBF) is an advanced manufacturing process that has great potential for structural optimization, especially in the aerospace sector. The LPBF process also leads to increased ramp surfaces and internal defects, which adversely impact the fatigue performance of parts produced.
+
+This research fills a major gap within the literature by investigating how set of manufacturing parameters define the defect characteristics and the overall fatigue performance. The key tasks comprised of defect segmentation, progression of initiating defects, and regions of fatigue crack growth evolution characterization.
+
+In this study, the data extraction defect features were correlated to mechanical properties using image processing, machine learning segmentation and hypothesis testing. A deep learning approach that employs Attention U-Net architecture for the segmentation of fatigue regions was shown to be more effective than traditional U-Net models because of the importance of global context. The features improve prediction of fatigue performance, with the $R^2$ incraesing by 0.02.
 
 # Introduction
 
@@ -116,6 +133,9 @@ In addition to these package, the recent release of Meta's foundation models seg
 The dataset mostly consists of unorganized images in 2 folders, and the numerical data is stored in a handful of spreadsheets. The dataframe was created in two parts: 1) The image dataframe, which contains the path to the images and 2) the numerical dataframe where are spreadsheets were merged. The id used to merge these dataframes is the sample_id, which was extracted from the image path using a regex and was cleaned from the existing Sample# column in the numerical spreadsheets. For the image dataframes, different categories were made, and each has a corresponding function which takes a file path as input an returns true for whether the path leads to an image of that category. Data validation is done here to ensure that the categories are well defined. 
 
 ## Data Cleaning
+
+In addition to these package, the recent release of Meta's foundation models segment anything and segment anything 2 will be explored for use in characterizing the unsegmented initiating defects from high resolution images. [@kirillov_segment_2023] [@ravi2024sam2]
+
 
 Data cleaning was an iterative process, with the organize data script being run to create a dataframe, then the results analyzed and verified with a jupyter notebook. The organize data script is in it's own section, and the smaller chucks used to analyze the results are below it. Several sections are not fully cleaned, with the majority of the effort going to the fatigue and overload region, since they are the easiest to verify and should be the simplest task for the model since they are rather large.
 Some forms of data validation include:
@@ -218,6 +238,8 @@ The fatigue_training.py is the full training script and is attatched as an appen
 knitr::opts_chunk$set(fig.width = 8, fig.height = 6)
 knitr::include_graphics("Figures/model_training.png")
 ```
+
+While this model could have been used, this training process was not reproducible, so this was not pursued further.
 
 ### Segmenting Entire Surface
 
@@ -380,231 +402,26 @@ knitr::include_graphics("Figures/Sharpness_fig.png")
 
 From knowledge of fracture mechanics, we know there is a link between the shape of the initiating defect and the resulting fatigue properties, so it should be possible to extract features from these images which predict fatigue performance. The most common feature is the aspect ratio. However, as shown in figure 8, shape 1 and 3 have similar aspect ratio, but shape 1 should create a significantly worse concentrating factor because of the sharp edge in the bottom right corner. Sharpness measures the change in radial distance from the centroid, which better captures these sharp edges, as can be seen by the high value for both shape 1 and 2. 
 
-```{python sharpness function}
-def invert_colors(image):
-    #From claude 3 Haiku
-    """
-    Invert the colors of the image.
-    For 8-bit images, use 255 - image.
-    For floating point images (0 to 1), use 1 - image.
-    """
-    if image.dtype == np.uint8:
-        return 255 - image
-    else:
-        return 1.0 - image
-
-img_1 = invert_colors(cv2.imread('img_1.png',cv2.IMREAD_GRAYSCALE))
-img_2 = invert_colors(cv2.imread('img_2.png',cv2.IMREAD_GRAYSCALE))
-img_3 = invert_colors(cv2.imread('img_3.png',cv2.IMREAD_GRAYSCALE))
+```{python initiating_defect_features}
+{{< include ../initiating_defect_features.py >}}
 ```
 
-```{python loading SAM segmentation of surface}
-save_path = '/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/SAM_whole_surface'
+From the above correlation plot, sharpness and aspect ratio do vary based on the portion of the screen the defect takes up. This means the measurement is independent of imaging magnification. From the regression information, we can see that the best regression was a polynomial regression with all processing parameters and the sharpness, with and $R^2=0.465$, with the best regression excluding extracted features having an $R^2=0.441$. This implies that the extracted features can marginally improve prediction of mechanical properties.
 
-def load_SAM__segmentation():    
-    paths_list = []
-    basename_lists = []
-    for path in os.listdir(save_path):
-        if 'seg' in path:
-            paths_list.append(save_path+'/'+path)
-            basename_lists.append(path.removeprefix("whole_surface_seg_"))
-    return pd.concat([pd.Series(paths_list,name='image_path'),pd.Series(basename_lists,name='image_basename')],axis=1)
-segmented_df = load_SAM__segmentation()
+# Discussion
 
-# print(combined_df['image_basename'].drop_duplicates().value_counts())
-# for group_string, basenames in combined_df.groupby('image_basename'):
-#     if 'stitched' in sample['image_class'].value_counts().index:
-#         
-```
+The primary result of this investigation is that features from the initiating defect of the fatigue fracture surface can be predictive of cycles to failure. Additionally, segmenting these images would have been in-feasible without the aid of the segment anything model. We can also see that aspect ratio does not change with the size of the image, which means it can be applied to any image resolution. Additionally, the attempt to segment the fatigue region shows that global context can be important for mechanical properties.
 
-```{python no points}
-x_not_SAM_test = []
-x_SAM_test = []
-for group_string, group in combined_df.groupby('sample_id'):
-    no_points = group[(group['image_class']=='initiation') & (group['points'].isna())]
-    points = group[(group['image_class']=='initiation') & (~group['points'].isna())]
-    if not (len(no_points.index)>=1 and len(points.index)>=1):
-        if len(no_points.index)>=1:
-            cycles =no_points['cycles'].iloc[0]
-            stress =no_points['test_stress_Mpa'].iloc[0]
-            x_not_SAM_test.append(math.log(cycles)*math.log(stress))
-        elif  len(points.index)>=1:
-            cycles =points['cycles'].iloc[0]
-            stress =points['test_stress_Mpa'].iloc[0]
-            x_SAM_test.append(math.log(cycles)*math.log(stress))
-```
+# Conclusion
 
+This project showed that prediction of fatigue performance can be improved with the use of features extracted from segmenting the initiating defect, and that modern tools make this far easier than in the past. This conclusion was reach by:
 
-```{python correlation plot,echo=FALSE,results='hide', eval = FALSE}
-def process_mask(mask):
-    # Find connected components
-    num_labels, labels = cv2.connectedComponents(mask)
-    
-    # Count components (excluding background)
-    num_objects = num_labels - 1
-    
-    # Find largest object
-    largest_object_mask = np.zeros_like(mask)
-    if num_objects > 0:
-        # Get unique labels, excluding background (0)
-        label_counts = [np.sum(labels == i) for i in range(1, num_labels)]
-        largest_object_label = np.argmax(label_counts) + 1
-        largest_object_mask = (labels == largest_object_label).astype(np.uint8) * 255
-    
-    return num_objects, largest_object_mask
-
-
-def extract_largest_object(img,points_list):
-    mask = np.zeros(img.shape[:2], dtype=np.uint8)
-    cv2.fillPoly(
-        mask,
-        [np.array(points_list, dtype=np.int32)],
-        255
-    )
-    img_object, largest_object_mask = process_mask(mask)
-    return largest_object_mask
-
-def find_sharpness(numpy_array):
-    #Convert array to dataframe
-    y,x= np.nonzero(numpy_array)
-    df = pd.DataFrame({'x':x,'y':y})
-    x0 = df['x'].sum()/df['x'].count()
-    y0 = df['y'].sum()/df['y'].count()
-    #Calculate polar coordinates
-    df['x_rel'] = df['x'] - x0
-    df['y_rel'] = df['y'] - y0
-    df['angle'] = df.apply(lambda row:math.atan(row['y_rel']/row['x_rel']),axis=1)
-    df['distance'] = df.apply(lambda row:math.sqrt(row['y_rel']**2 + row['x_rel']**2),axis=1)
-    global_max = df['distance'].max()
-    #Find max for each bin
-    num_bins = 180
-    bin_edges = np.linspace(-math.pi/2, math.pi/2, num_bins + 1)
-    bins = pd.IntervalIndex.from_breaks(bin_edges,name='Angle_bin')
-    df.index = pd.cut(df['angle'],bins)
-    max_df = df.groupby(level=0,observed=False)['distance'].max()
-    max_diff = []
-    for i in range(0,len(max_df)-2):
-        max_diff.append(abs(max_df.iloc[i]-max_df.iloc[i+1])/global_max)
-
-    return max(max_diff)
-def calculate_aspect_ratio(mask):
-    # Find the non-zero mask coordinates
-    y_coords, x_coords = np.where(mask > 0)
-    
-    # Calculate the bounding box dimensions
-    height = y_coords.max() - y_coords.min() + 1
-    width = x_coords.max() - x_coords.min() + 1
-    
-    # Calculate the aspect ratio
-    aspect_ratio = width / height
-    return aspect_ratio
-
-def get_perimeter(binary_image):
-    # Ensure the image is binary
-    contours, _ = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
-    # If there are contours, return the perimeter of the largest contour
-    if contours:
-        largest_contour = max(contours, key=cv2.contourArea)
-        return cv2.arcLength(largest_contour, closed=True)
-    
-    return 0
-    
-def calculate_aspect_ratio_rotated(binary_image):
-    # Find contours
-    contours, _ = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
-    if not contours:
-        return None
-    
-    # Get the largest contour
-    largest_contour = max(contours, key=cv2.contourArea)
-    
-    # Get the rotated rectangle
-    rect = cv2.minAreaRect(largest_contour)
-    (width, height) = rect[1]
-    
-    # Calculate aspect ratio (ensuring width is always the larger dimension)
-    aspect_ratio = max(width, height) / min(width, height)
-    
-    return aspect_ratio
-
-with_polygon_df = combined_df[~combined_df['points'].isna()]
-imgs = []
-energy = []
-stress = []
-print(with_polygon_df.columns)
-for row in with_polygon_df.iterrows():
-    imgs.append(
-        extract_largest_object(
-            cv2.imread(row[1]['image_path']),
-            ast.literal_eval(row[1]['points'])
-            )
-    )
-    energy.append(row[1]['energy_density_J_mm3'])
-    stress.append(row[1]['test_stress_Mpa'])
-
-portion_of_screen = joblib.Parallel(n_jobs=-1)(joblib.delayed(lambda x: x.sum() / (x.size * x.max()))(x) for x in imgs)
-max_sharpness = joblib.Parallel(n_jobs=-1)(joblib.delayed(find_sharpness)(x) for x in imgs)
-aspect_ratio = joblib.Parallel(n_jobs=-1)(joblib.delayed(calculate_aspect_ratio_rotated)(x) for x in imgs)
-perimeter = joblib.Parallel(n_jobs=-1)(joblib.delayed(get_perimeter)(x) for x in imgs)
-pixels = joblib.Parallel(n_jobs=-1)(joblib.delayed(lambda x: x.sum() / x.max())(x) for x in imgs)
-pixel_perimeter_ratio = joblib.Parallel(n_jobs=-1)(joblib.delayed(lambda x: x.sum() / (x.max() * get_perimeter(x)))(x) for x in imgs)
-```
-
-```{python, eval=FALSE}
-data = {
-    "screen_portion": portion_of_screen,
-    "max_sharpness": max_sharpness,
-    "aspect_ratio": aspect_ratio,
-    "perimeter": perimeter,
-    "pixels": pixels,
-    "pixel_perimeter_ratio": pixel_perimeter_ratio,
-    "energy_density":energy,
-    "stress Mpa":stress
-}
-df = pd.DataFrame(data).replace([np.inf, -np.inf], np.nan).dropna()
-
-def annotate_r2(x, y, **kwargs):
-    slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x, y)
-    r_squared = r_value ** 2
-    ax = plt.gca()
-    ax.annotate(f"$R^2$ = {r_squared:.2f}", xy=(0.6, 0.9), xycoords=ax.transAxes, fontsize=20)
-
-# Create pairplot with linear regression
-cmap = plt.cm.viridis
-palette = [cmap(i / 3) for i in range(len(df.columns))]
-g = seaborn.pairplot(df,kind="reg", plot_kws={"line_kws": {"color": "red"}},hue="energy_density",palette=palette)
-
-# Adjust the size of axis labels and ticks using matplotlib
-for ax in g.axes.flatten():
-    ax.set_xlabel(ax.get_xlabel(), fontsize=14)  # Set the font size of x-axis labels
-    ax.set_ylabel(ax.get_ylabel(), fontsize=14)  # Set the font size of y-axis labels
-    ax.tick_params(axis='both', labelsize=12)    # Set the font size of ticks
-# Add R-squared annotations to each plot
-# g.map(annotate_r2)
-plt.show()
-```
-
-Next, the features are being extracted using the initiating_defect_features.py script, which is also included in the appendix
-
-```{python running initiating_defect_features script,results='hide'}
-df = initiating_defect_features.make_feature_df()
-columns = ["screen_portion","max_sharpness","aspect_ratio","perimeter","pixels"]
-df[columns] = df[columns].replace([np.inf, -np.inf], np.nan)
-df = df.dropna()
-initiating_defect_features.regression_on_df(df)
-print(df_results.iloc[df_results['r2'].idxmax()])
-print(df_results.iloc[df_results[(df_results['aspect_ratio']==False) & (df_results['sharpness']==False)]['r2'].idxmax()])
-```
-
-```{python plot features, results='hide'}
-initiating_defect_features.plot_feature_df(df[columns])
-```
-
-```{python}
-
-```
+1. Curating a tidy dataframe from the unstructured image folders and excel sheets
+2. Using modern AI enhanced segmentation tools to segment all initiating defects
+3. Cleaning these masks
+4. Extracting features from these masks
+5. Validating these features to ensure that they are independent of imaging parameters
+6. Performing regression with these images
 
 # Citations
 
