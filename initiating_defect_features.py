@@ -16,11 +16,6 @@ import sklearn.preprocessing
 import sklearn.pipeline
 import itertools
 
-combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
-points_df = combined_df[~combined_df['points'].isna()]
-points_df['image_class'].value_counts()
-points_df['sample_id'].value_counts().head(10)
-
 # %%
 '''Functions'''
 def process_mask(mask):
@@ -57,10 +52,11 @@ def find_sharpness(numpy_array):
     df = pd.DataFrame({'x':x,'y':y})
     x0 = df['x'].sum()/df['x'].count()
     y0 = df['y'].sum()/df['y'].count()
+    df = df[(df['x']!=0)&(df['y']!=0)].reset_index(drop=True) # to avoid divide by 0 errors later
     #Calculate polar coordinates
     df['x_rel'] = df['x'] - x0
     df['y_rel'] = df['y'] - y0
-    df['angle'] = df.apply(lambda row:math.atan(row['y_rel']/row['x_rel']),axis=1)
+    df['angle'] = df.apply(lambda row:math.atan2(row['y_rel'],row['x_rel']),axis=1)
     df['distance'] = df.apply(lambda row:math.sqrt(row['y_rel']**2 + row['x_rel']**2),axis=1)
     global_max = df['distance'].max()
     #Find max for each bin
@@ -70,10 +66,10 @@ def find_sharpness(numpy_array):
     df.index = pd.cut(df['angle'],bins)
     max_df = df.groupby(level=0,observed=False)['distance'].max()
     max_diff = []
-    for i in range(0,len(max_df)-2):
+    for i in range(0,len(max_df)-1):
         max_diff.append(abs(max_df.iloc[i]-max_df.iloc[i+1])/global_max)
+    return max(max_diff) if max_diff else 0
 
-    return max(max_diff)
 def calculate_aspect_ratio(mask):
     # Find the non-zero mask coordinates
     y_coords, x_coords = np.where(mask > 0)
@@ -116,68 +112,6 @@ def calculate_aspect_ratio_rotated(binary_image):
     
     return aspect_ratio
 
-# %%
-'''Loading Images and Polygons'''
-imgs = []
-energy = []
-stress = []
-laser_power = []
-laser_speed = []
-cycles = []
-print(points_df.columns)
-for row in points_df.iterrows():
-    imgs.append(
-        extract_largest_object(
-            cv2.imread(row[1]['image_path']),
-            ast.literal_eval(row[1]['points'])
-            )
-    )
-    laser_power.append(row[1]['scan_power_W'])
-    laser_speed.append(row[1]['scan_velocity_mm_s'])
-    energy.append(row[1]['energy_density_J_mm3'])
-    stress.append(row[1]['test_stress_Mpa'])
-    cycles.append(row[1]['cycles'])
-# %%
-'''Extracting Features'''
-portion_of_screen = Parallel(n_jobs=-1)(delayed(lambda x: x.sum() / (x.size * x.max()))(x) for x in imgs)
-max_sharpness = Parallel(n_jobs=-1)(delayed(find_sharpness)(x) for x in imgs)
-aspect_ratio = Parallel(n_jobs=-1)(delayed(calculate_aspect_ratio_rotated)(x) for x in imgs)
-perimeter = Parallel(n_jobs=-1)(delayed(get_perimeter)(x) for x in imgs)
-pixels = Parallel(n_jobs=-1)(delayed(lambda x: x.sum() / x.max())(x) for x in imgs)
-pixel_perimeter_ratio = Parallel(n_jobs=-1)(delayed(lambda x: x.sum() / (x.max() * get_perimeter(x)))(x) for x in imgs)
-data = {
-    "screen_portion": portion_of_screen,
-    "max_sharpness": max_sharpness,
-    "aspect_ratio": aspect_ratio,
-    "perimeter": perimeter,
-    "pixels": pixels,
-    "pixel_perimeter_ratio": pixel_perimeter_ratio,
-    "energy_density":energy,
-    "stress_Mpa":stress,
-    "laser_power":laser_power,
-    "laser_speed":laser_speed,
-    "cycles": cycles
-}
-df = pd.DataFrame(data).replace([np.inf, -np.inf], np.nan).dropna()
-# %%
-'''Plotting Features'''
-def annotate_r2(x, y, **kwargs):
-    x = np.array(x).reshape(-1, 1)
-    y = np.array(y)
-    model = sklearn.linear_model.LinearRegression()
-    model.fit(x, y)
-    r_squared = model.score(x, y)
-    ax = plt.gca()
-    ax.annotate(f"$R^2$ = {r_squared:.2f}", xy=(0.05, 0.9), xycoords=ax.transAxes, fontsize=10)
-
-# Create pairplot with linear regression
-g = sns.pairplot(df, kind="reg", plot_kws={"line_kws": {"color": "red"}})
-
-# Add R-squared annotations to each plot
-g = g.map(annotate_r2)
-
-# %%
-'''Evaluate Predictors'''
 def multiple_linear_regression(X,Y):
     # Sklearn Linear Regression
     X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, Y, test_size=0.2, random_state=42)
@@ -254,70 +188,144 @@ def lasso_regression(X,Y):
     r2 = sklearn.metrics.r2_score(y_test, y_pred)
     return lasso, y_pred, mse, r2
 
-metric_used_list = []
-regression_type = []
-energy_density_list = []
-laser_power_list = []
-scan_speed_list = []
-aspect_ratio_list = []
-sharpness_list = []
-y_pred_list = []
-mse_list = []
-r2_list = []
-for metric in ['log_stress','stress']:
-    for regression in [multiple_linear_regression,polynomial_regression,ridge_regression,lasso_regression]:
-        for inputs in list(itertools.product([True, False], repeat=5)):
-            if True in inputs: # There needs to be at least 1 predictor
-                regression_type.append(regression.__name__)
-                inputs_columns = []
-                if inputs[0]:
-                    energy_density_list.append(True)
-                    inputs_columns.append('energy_density')
-                else:
-                    energy_density_list.append(False)
-                if inputs[1]:
-                    laser_power_list.append(True)
-                    inputs_columns.append('laser_power')
-                else:
-                    laser_power_list.append(False)
-                if inputs[2]:
-                    scan_speed_list.append(True)
-                    inputs_columns.append('laser_speed')
-                else:
-                    scan_speed_list.append(False)
-                if inputs[3]:
-                    aspect_ratio_list.append(True)
-                    inputs_columns.append('aspect_ratio')
-                else:
-                    aspect_ratio_list.append(False)
-                if inputs[4]:
-                    sharpness_list.append(True)
-                    inputs_columns.append('max_sharpness')
-                else:
-                    sharpness_list.append(False)
-                X = df[inputs_columns]
-                if metric =='log_stress':
-                    Y = df['cycles'].apply(math.log)
-                    metric_used_list.append('log(stress)')
-                elif metric =='stress':
-                    Y = df['cycles'].apply(math.log)*df['stress_Mpa']
-                    metric_used_list.append('stress')
-                model, y_pred, mse, r2 = regression(X,Y)
-                mse_list.append(mse)
-                r2_list.append(r2)
+def make_feature_df(points_df):
+    imgs = []
+    energy = []
+    stress = []
+    laser_power = []
+    laser_speed = []
+    cycles = []
+    sample_id = []
+    for row in points_df.iterrows():
+        imgs.append(
+            extract_largest_object(
+                cv2.imread(row[1]['image_path']),
+                ast.literal_eval(row[1]['points'])
+                )
+        )
+        laser_power.append(row[1]['scan_power_W'])
+        laser_speed.append(row[1]['scan_velocity_mm_s'])
+        energy.append(row[1]['energy_density_J_mm3'])
+        stress.append(row[1]['test_stress_Mpa'])
+        cycles.append(row[1]['cycles'])
+        sample_id.append(row[1]['sample_id'])
+    portion_of_screen = Parallel(n_jobs=-1)(delayed(lambda x: x.sum() / (x.size * x.max()))(x) for x in imgs)
+    max_sharpness = Parallel(n_jobs=-1)(delayed(find_sharpness)(x) for x in imgs)
+    aspect_ratio = Parallel(n_jobs=-1)(delayed(calculate_aspect_ratio_rotated)(x) for x in imgs)
+    perimeter = Parallel(n_jobs=-1)(delayed(get_perimeter)(x) for x in imgs)
+    pixels = Parallel(n_jobs=-1)(delayed(lambda x: x.sum() / x.max())(x) for x in imgs)
+    pixel_perimeter_ratio = Parallel(n_jobs=-1)(delayed(lambda x: x.sum() / (x.max() * get_perimeter(x)))(x) for x in imgs)
+    data = {
+        "sample_id":sample_id,
+        "imgs": imgs,
+        "screen_portion": portion_of_screen,
+        "max_sharpness": max_sharpness,
+        "aspect_ratio": aspect_ratio,
+        "perimeter": perimeter,
+        "pixels": pixels,
+        "pixel_perimeter_ratio": pixel_perimeter_ratio,
+        "energy_density":energy,
+        "stress_Mpa":stress,
+        "laser_power":laser_power,
+        "laser_speed":laser_speed,
+        "cycles": cycles
+    }
+    return pd.DataFrame(data)
 
-regression_dict = {
-    "metric_used":metric_used_list,
-    "regression_type":regression_type,
-    "energy_density":energy_density_list,
-    "laser_power":laser_power_list,
-    "scan_speed":scan_speed_list,
-    "aspect_ratio":aspect_ratio_list,
-    "sharpness":sharpness_list,
-    "mse":mse_list,
-    "r2":r2_list
-}
-df_results = pd.DataFrame(regression_dict)
+def plot_feature_df(df):
+    def annotate_r2(x, y, **kwargs):
+        x = np.array(x).reshape(-1, 1)
+        y = np.array(y)
+        model = sklearn.linear_model.LinearRegression()
+        model.fit(x, y)
+        r_squared = model.score(x, y)
+        ax = plt.gca()
+        ax.annotate(f"$R^2$ = {r_squared:.2f}", xy=(0.05, 0.9), xycoords=ax.transAxes, fontsize=10)
 
-print(df_results.iloc[df_results['r2'].idxmax()])
-print(df_results.iloc[df_results[(df_results['aspect_ratio']==False) & (df_results['sharpness']==False)]['r2'].idxmax()])
+    # Create pairplot with linear regression
+    g = sns.pairplot(df, kind="reg", plot_kws={"line_kws": {"color": "red"}})
+    # Add R-squared annotations to each plot
+    g.map(annotate_r2)
+def regression_on_df(df):
+    metric_used_list = []
+    regression_type = []
+    energy_density_list = []
+    laser_power_list = []
+    scan_speed_list = []
+    aspect_ratio_list = []
+    sharpness_list = []
+    y_pred_list = []
+    mse_list = []
+    r2_list = []
+    for metric in ['log_stress','stress']:
+        for regression in [multiple_linear_regression,polynomial_regression,ridge_regression,lasso_regression]:
+            for inputs in list(itertools.product([True, False], repeat=5)):
+                if True in inputs: # There needs to be at least 1 predictor
+                    regression_type.append(regression.__name__)
+                    inputs_columns = []
+                    if inputs[0]:
+                        energy_density_list.append(True)
+                        inputs_columns.append('energy_density')
+                    else:
+                        energy_density_list.append(False)
+                    if inputs[1]:
+                        laser_power_list.append(True)
+                        inputs_columns.append('laser_power')
+                    else:
+                        laser_power_list.append(False)
+                    if inputs[2]:
+                        scan_speed_list.append(True)
+                        inputs_columns.append('laser_speed')
+                    else:
+                        scan_speed_list.append(False)
+                    if inputs[3]:
+                        aspect_ratio_list.append(True)
+                        inputs_columns.append('aspect_ratio')
+                    else:
+                        aspect_ratio_list.append(False)
+                    if inputs[4]:
+                        sharpness_list.append(True)
+                        inputs_columns.append('max_sharpness')
+                    else:
+                        sharpness_list.append(False)
+                    if metric =='log_stress':
+                        Y = df['cycles'].apply(math.log)
+                        metric_used_list.append('log(stress)')
+                    elif metric =='stress':
+                        Y = df['cycles'].apply(math.log)*df['stress_Mpa']
+                        metric_used_list.append('stress')
+                    X = df[inputs_columns]
+                    model, y_pred, mse, r2 = regression(X,Y)
+                    mse_list.append(mse)
+                    r2_list.append(r2)
+
+    regression_dict = {
+        "metric_used":metric_used_list,
+        "regression_type":regression_type,
+        "energy_density":energy_density_list,
+        "laser_power":laser_power_list,
+        "scan_speed":scan_speed_list,
+        "aspect_ratio":aspect_ratio_list,
+        "sharpness":sharpness_list,
+        "mse":mse_list,
+        "r2":r2_list
+    }
+    df_results = pd.DataFrame(regression_dict)
+    return df_results
+# %%
+if __name__=="__main__":
+    print(__name__+" script running")
+    # %%
+    combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
+    points_df = combined_df[~combined_df['points'].isna()]
+    print(points_df['image_class'].value_counts())
+    print(points_df['sample_id'].value_counts().head(10))
+    df = make_feature_df(points_df)
+    columns = ["screen_portion","max_sharpness","aspect_ratio","perimeter","pixels"]
+    df[columns] = df[columns].replace([np.inf, -np.inf], np.nan)
+    df = df.dropna()
+    plot = plot_feature_df(df[columns])
+    results_df = regression_on_df(df)
+    print(results_df)
+else:
+    print(__name__+" functions loaded")

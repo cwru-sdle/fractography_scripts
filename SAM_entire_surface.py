@@ -4,6 +4,8 @@ import sys
 import numpy as np
 path = '/mnt/vstor/CSE_MSE_RXF131/cradle-members/mds3/aml334/mds3-advman-2/topics/aml-fractography/sam'
 sys.path.append(path)
+sys.path.append("/mnt/vstor/CSE_MSE_RXF131/cradle-members/mds3/aml334/mds3-advman-2/topics/aml-fractography/fractography_scripts")
+import organize_data
 from segment_anything import sam_model_registry, SamPredictor
 import urllib.request
 import cv2
@@ -14,21 +16,9 @@ import sys
 import os
 import random
 import matplotlib.pyplot as plt
-import organize_data
+import torch
 
-sam_checkpoint = path +"/sam_vit_h_4b8939.pth"
-# url = "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
-# sam_checkpoint = urllib.request.urlretrieve(url)
-
-model_type = "vit_h"
-
-device = "cuda"
-
-sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
-sam.to(device=device)
-predictor = SamPredictor(sam)
-
-np.random.seed(3)
+idx=0
 
 def show_mask(mask, ax, random_color=False, borders = True):
     if random_color:
@@ -167,33 +157,6 @@ def unfilled_ratio(img):
     # cv2.destroyAllWindows()
     return unfilled_ratio
 
-# %%
-combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
-df = combined_df[combined_df['image_basename'].apply(lambda x: type(x)==str)] #Drops nas, which are loaded as floats
-df = df.groupby('sample_id')
-stitched_imgs = pd.DataFrame()
-
-for group_string, sample in df:
-    if 'stitched' in sample['image_class'].value_counts().index:
-        stitched_imgs = pd.concat(
-            [
-                stitched_imgs,
-                sample[sample['image_class']=='stitched'].iloc[[0]]
-            ],
-            axis=0
-        )
-organize_data.print_column_counts(stitched_imgs)
-print(stitched_imgs['image_path'].iloc[0])
-idx=0
-
-# %%
-'''SAM interactive'''
-idx += 1
-d_pos = .3
-grid_spacing = 32
-RANDOM_POSITIONS=20
-input_size = 1024
-
 def SAM_surface_segmentation(path):
     all_points = []
     input_label = []
@@ -290,9 +253,57 @@ def SAM_surface_segmentation(path):
     max_mask = fill_mask_holes(processed_mask)
     return image_blurred, max_mask, all_points, input_label
 
-input_image, output_image, all_points, input_label = SAM_surface_segmentation(stitched_imgs['image_path'].iloc[idx])
-fig, ax = plt.subplots(2)
-ax[0].imshow(input_image)
-show_points(np.array(all_points), np.array(input_label), ax[0])
-ax[1].imshow(output_image)
-plt.show()
+def setup_SAM():
+    sam_checkpoint = path +"/sam_vit_h_4b8939.pth"
+    # url = "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
+    # sam_checkpoint = urllib.request.urlretrieve(url)
+
+    model_type = "vit_h"
+
+    sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # Only move `sam` to GPU if an NVIDIA GPU is available
+    if torch.cuda.is_available():
+        sam.to(device=device)
+        print("Model moved to GPU.")
+    else:
+        print("No NVIDIA GPU detected. Using CPU.")
+    predictor = SamPredictor(sam)
+
+    np.random.seed(3)
+    return predictor
+# %%
+if __name__=="main":
+    predictor = setup_SAM()
+    idx += 1
+    d_pos = .3
+    grid_spacing = 32
+    RANDOM_POSITIONS=20
+    input_size = 1024
+    combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
+    df = combined_df[combined_df['image_basename'].apply(lambda x: type(x)==str)] #Drops nas, which are loaded as floats
+    df = df.groupby('sample_id')
+
+    stitched_imgs = pd.DataFrame()
+    for group_string, sample in df:
+        if 'stitched' in sample['image_class'].value_counts().index:
+            stitched_imgs = pd.concat(
+                [
+                    stitched_imgs,
+                    sample[sample['image_class']=='stitched'].iloc[[0]]
+                ],
+                axis=0
+            )
+
+    organize_data.print_column_counts(stitched_imgs)
+    print(stitched_imgs['image_path'].iloc[0])
+    input_image, output_image, all_points, input_label = SAM_surface_segmentation(stitched_imgs['image_path'].iloc[idx])
+    fig, ax = plt.subplots(2)
+    ax[0].imshow(input_image)
+    show_points(np.array(all_points), np.array(input_label), ax[0])
+    ax[1].imshow(output_image)
+    plt.show()
+else:
+    print(__name__+" functions loaded")
