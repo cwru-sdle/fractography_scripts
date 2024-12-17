@@ -3,14 +3,13 @@
 import math
 import sys
 import numpy as np
-import pandas as ps
+import pandas as pd
 import cv2
 import torch
-sys.path.append("/mnt/vstor/CSE_MSE_RXF131/cradle-members/mds3/aml334/mds3-advman-2/topics/aml-fractography/fractography_scripts")
 import initiating_defect_features
-sys.path.append("/mnt/vstor/CSE_MSE_RXF131/cradle-members/mds3/aml334/mds3-advman-2/topics/aml-fractography/pykan")
-from kan import *
+# sys.path.append("pykan/")
 from segment_anything import sam_model_registry, SamPredictor
+# from pykan.kan import *
 
 # def kan_regression(X,Y)
 #     model = KAN(width=[2,5,1], grid=5, k=3, seed=0)

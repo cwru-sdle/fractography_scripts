@@ -2,8 +2,6 @@
 import os
 import sys
 import numpy as np
-path = '/mnt/vstor/CSE_MSE_RXF131/cradle-members/mds3/aml334/mds3-advman-2/topics/aml-fractography/sam'
-sys.path.append(path)
 from segment_anything import sam_model_registry, SamPredictor
 import urllib.request
 import cv2
@@ -16,7 +14,7 @@ import random
 import matplotlib.pyplot as plt
 import organize_data
 
-sam_checkpoint = path +"/sam_vit_h_4b8939.pth"
+sam_checkpoint = "/sam_vit_h_4b8939.pth"
 # url = "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
 # sam_checkpoint = urllib.request.urlretrieve(url)
 
@@ -330,25 +328,10 @@ for x_pos in [x_mid - x_disp,x_mid,x_mid+x_disp]:
 #         all_points.append([x_pos,input_size*.97])
 #         input_label.append(0)
 
-
-predictor.set_image(image_blurred)
-masks, scores, logits = predictor.predict(
-    point_coords=np.array(all_points),
-    point_labels=np.array(input_label),
-    multimask_out
-    # Invert the flood-filled image
-    filled_mask_inv = cv2.bitwise_not(filled_mask)
-    
-    # Combine the original mask with the filled holes
-    out_mask = binary_mask | filled_mask_inv
-    
-    return out_mask
 max_mask = fill_mask_holes(processed_mask)
 
 # plt.axis('on')
-fig_segment_main_area.show()put=True,
-    
-)
+fig_segment_main_area.show()
 sorted_ind = np.argsort(scores)[::-1]
 masks = masks[sorted_ind]
 scores = scores[sorted_ind]

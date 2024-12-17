@@ -2,11 +2,6 @@
 import os
 import sys
 import numpy as np
-path = '/mnt/vstor/CSE_MSE_RXF131/cradle-members/mds3/aml334/mds3-advman-2/topics/aml-fractography/sam'
-sys.path.append(path)
-sys.path.append("/mnt/vstor/CSE_MSE_RXF131/cradle-members/mds3/aml334/mds3-advman-2/topics/aml-fractography/fractography_scripts")
-import organize_data
-from segment_anything import sam_model_registry, SamPredictor
 import urllib.request
 import cv2
 import pandas as pd
@@ -17,6 +12,8 @@ import os
 import random
 import matplotlib.pyplot as plt
 import torch
+import organize_data
+from segment_anything import sam_model_registry, SamPredictor
 
 idx=0
 

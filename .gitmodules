@@ -1,0 +1,12 @@
+[submodule "Semantic-Segmentation-Architecture"]
+	path = Semantic-Segmentation-Architecture
+	url = https://github.com/nikhilroxtomar/Semantic-Segmentation-Architecture.git
+[submodule "sam2"]
+	path = sam2
+	url = https://github.com/facebookresearch/sam2.git
+[submodule "segment-anything"]
+	path = segment-anything
+	url = https://github.com/facebookresearch/segment-anything.git
+[submodule "pykan"]
+	path = pykan
+	url = https://github.com/KindXiaoming/pykan.git
