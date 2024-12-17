@@ -510,4 +510,4 @@ if __name__=="__main__":
         i+=1
 
 else:
-    print(__name__)
+    print(__name__+' functions loaded')

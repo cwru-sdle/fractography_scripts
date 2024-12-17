@@ -1,0 +1,203 @@
+```{python loading SAM segmentation of surface,eval=FALSE}
+save_path = '/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/SAM_whole_surface'
+
+def load_SAM__segmentation():    
+    paths_list = []
+    basename_lists = []
+    for path in os.listdir(save_path):
+        if 'seg' in path:
+            paths_list.append(save_path+'/'+path)
+            basename_lists.append(path.removeprefix("whole_surface_seg_"))
+    return pd.concat([pd.Series(paths_list,name='image_path'),pd.Series(basename_lists,name='image_basename')],axis=1)
+segmented_df = load_SAM__segmentation()
+
+# print(combined_df['image_basename'].drop_duplicates().value_counts())
+# for group_string, basenames in combined_df.groupby('image_basename'):
+#     if 'stitched' in sample['image_class'].value_counts().index:
+#         
+```
+
+```{python no points}
+x_not_SAM_test = []
+x_SAM_test = []
+for group_string, group in combined_df.groupby('sample_id'):
+    no_points = group[(group['image_class']=='initiation') & (group['points'].isna())]
+    points = group[(group['image_class']=='initiation') & (~group['points'].isna())]
+    if not (len(no_points.index)>=1 and len(points.index)>=1):
+        if len(no_points.index)>=1:
+            cycles =no_points['cycles'].iloc[0]
+            stress =no_points['test_stress_Mpa'].iloc[0]
+            x_not_SAM_test.append(math.log(cycles)*math.log(stress))
+        elif  len(points.index)>=1:
+            cycles =points['cycles'].iloc[0]
+            stress =points['test_stress_Mpa'].iloc[0]
+            x_SAM_test.append(math.log(cycles)*math.log(stress))
+```
+
+
+```{python correlation plot,echo=FALSE,results='hide', eval = FALSE}
+def process_mask(mask):
+    # Find connected components
+    num_labels, labels = cv2.connectedComponents(mask)
+    
+    # Count components (excluding background)
+    num_objects = num_labels - 1
+    
+    # Find largest object
+    largest_object_mask = np.zeros_like(mask)
+    if num_objects > 0:
+        # Get unique labels, excluding background (0)
+        label_counts = [np.sum(labels == i) for i in range(1, num_labels)]
+        largest_object_label = np.argmax(label_counts) + 1
+        largest_object_mask = (labels == largest_object_label).astype(np.uint8) * 255
+    
+    return num_objects, largest_object_mask
+
+
+def extract_largest_object(img,points_list):
+    mask = np.zeros(img.shape[:2], dtype=np.uint8)
+    cv2.fillPoly(
+        mask,
+        [np.array(points_list, dtype=np.int32)],
+        255
+    )
+    img_object, largest_object_mask = process_mask(mask)
+    return largest_object_mask
+
+def find_sharpness(numpy_array):
+    #Convert array to dataframe
+    y,x= np.nonzero(numpy_array)
+    df = pd.DataFrame({'x':x,'y':y})
+    x0 = df['x'].sum()/df['x'].count()
+    y0 = df['y'].sum()/df['y'].count()
+    #Calculate polar coordinates
+    df['x_rel'] = df['x'] - x0
+    df['y_rel'] = df['y'] - y0
+    df['angle'] = df.apply(lambda row:math.atan(row['y_rel']/row['x_rel']),axis=1)
+    df['distance'] = df.apply(lambda row:math.sqrt(row['y_rel']**2 + row['x_rel']**2),axis=1)
+    global_max = df['distance'].max()
+    #Find max for each bin
+    num_bins = 180
+    bin_edges = np.linspace(-math.pi/2, math.pi/2, num_bins + 1)
+    bins = pd.IntervalIndex.from_breaks(bin_edges,name='Angle_bin')
+    df.index = pd.cut(df['angle'],bins)
+    max_df = df.groupby(level=0,observed=False)['distance'].max()
+    max_diff = []
+    for i in range(0,len(max_df)-2):
+        max_diff.append(abs(max_df.iloc[i]-max_df.iloc[i+1])/global_max)
+
+    return max(max_diff)
+def calculate_aspect_ratio(mask):
+    # Find the non-zero mask coordinates
+    y_coords, x_coords = np.where(mask > 0)
+    
+    # Calculate the bounding box dimensions
+    height = y_coords.max() - y_coords.min() + 1
+    width = x_coords.max() - x_coords.min() + 1
+    
+    # Calculate the aspect ratio
+    aspect_ratio = width / height
+    return aspect_ratio
+
+def get_perimeter(binary_image):
+    # Ensure the image is binary
+    contours, _ = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # If there are contours, return the perimeter of the largest contour
+    if contours:
+        largest_contour = max(contours, key=cv2.contourArea)
+        return cv2.arcLength(largest_contour, closed=True)
+    
+    return 0
+    
+def calculate_aspect_ratio_rotated(binary_image):
+    # Find contours
+    contours, _ = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    if not contours:
+        return None
+    
+    # Get the largest contour
+    largest_contour = max(contours, key=cv2.contourArea)
+    
+    # Get the rotated rectangle
+    rect = cv2.minAreaRect(largest_contour)
+    (width, height) = rect[1]
+    
+    # Calculate aspect ratio (ensuring width is always the larger dimension)
+    aspect_ratio = max(width, height) / min(width, height)
+    
+    return aspect_ratio
+
+with_polygon_df = combined_df[~combined_df['points'].isna()]
+imgs = []
+energy = []
+stress = []
+print(with_polygon_df.columns)
+for row in with_polygon_df.iterrows():
+    imgs.append(
+        extract_largest_object(
+            cv2.imread(row[1]['image_path']),
+            ast.literal_eval(row[1]['points'])
+            )
+    )
+    energy.append(row[1]['energy_density_J_mm3'])
+    stress.append(row[1]['test_stress_Mpa'])
+
+portion_of_screen = joblib.Parallel(n_jobs=-1)(joblib.delayed(lambda x: x.sum() / (x.size * x.max()))(x) for x in imgs)
+max_sharpness = joblib.Parallel(n_jobs=-1)(joblib.delayed(find_sharpness)(x) for x in imgs)
+aspect_ratio = joblib.Parallel(n_jobs=-1)(joblib.delayed(calculate_aspect_ratio_rotated)(x) for x in imgs)
+perimeter = joblib.Parallel(n_jobs=-1)(joblib.delayed(get_perimeter)(x) for x in imgs)
+pixels = joblib.Parallel(n_jobs=-1)(joblib.delayed(lambda x: x.sum() / x.max())(x) for x in imgs)
+pixel_perimeter_ratio = joblib.Parallel(n_jobs=-1)(joblib.delayed(lambda x: x.sum() / (x.max() * get_perimeter(x)))(x) for x in imgs)
+```
+
+```{python, eval=FALSE}
+data = {
+    "screen_portion": portion_of_screen,
+    "max_sharpness": max_sharpness,
+    "aspect_ratio": aspect_ratio,
+    "perimeter": perimeter,
+    "pixels": pixels,
+    "pixel_perimeter_ratio": pixel_perimeter_ratio,
+    "energy_density":energy,
+    "stress Mpa":stress
+}
+df = pd.DataFrame(data).replace([np.inf, -np.inf], np.nan).dropna()
+
+def annotate_r2(x, y, **kwargs):
+    slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x, y)
+    r_squared = r_value ** 2
+    ax = plt.gca()
+    ax.annotate(f"$R^2$ = {r_squared:.2f}", xy=(0.6, 0.9), xycoords=ax.transAxes, fontsize=20)
+
+# Create pairplot with linear regression
+cmap = plt.cm.viridis
+palette = [cmap(i / 3) for i in range(len(df.columns))]
+g = seaborn.pairplot(df,kind="reg", plot_kws={"line_kws": {"color": "red"}},hue="energy_density",palette=palette)
+
+# Adjust the size of axis labels and ticks using matplotlib
+for ax in g.axes.flatten():
+    ax.set_xlabel(ax.get_xlabel(), fontsize=14)  # Set the font size of x-axis labels
+    ax.set_ylabel(ax.get_ylabel(), fontsize=14)  # Set the font size of y-axis labels
+    ax.tick_params(axis='both', labelsize=12)    # Set the font size of ticks
+# Add R-squared annotations to each plot
+# g.map(annotate_r2)
+plt.show()
+```
+
+Next, the features are being extracted using the initiating_defect_features.py script, which is also included in the appendix
+
+```{python running initiating_defect_features script,results='hide',eval=FALSE}
+df = initiating_defect_features.make_feature_df()
+columns = ["screen_portion","max_sharpness","aspect_ratio","perimeter","pixels"]
+df[columns] = df[columns].replace([np.inf, -np.inf], np.nan)
+df = df.dropna()
+initiating_defect_features.regression_on_df(df)
+print(df_results.iloc[df_results['r2'].idxmax()])
+print(df_results.iloc[df_results[(df_results['aspect_ratio']==False) & (df_results['sharpness']==False)]['r2'].idxmax()])
+```
+
+```{python plot features, results='hide',eval=FALSE}
+initiating_defect_features.plot_feature_df(df[columns])
+```

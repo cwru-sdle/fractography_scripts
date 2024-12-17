@@ -61,8 +61,8 @@ df = df.groupby('sample_id')
 x_sup = []
 y_sup = []
 for group_string, sample in df:
-    if 'fatigue' in sample['image_class'].value_counts().index and 'full_surface_unmarked' in sample['image_class'].value_counts().index:
-        y_sup.append(sample[(sample['image_class']=='fatigue') & (sample['image_path'].apply(lambda x: '.png' in x))]['image_path'].iloc[0])
+    if 'overload' in sample['image_class'].value_counts().index and 'full_surface_unmarked' in sample['image_class'].value_counts().index:
+        y_sup.append(sample[(sample['image_class']=='overload') & (sample['image_path'].apply(lambda x: '.png' in x))]['image_path'].iloc[0])
         x_sup.append(sample[(sample['image_class']=='full_surface_unmarked')]['image_path'].iloc[0])
 x_temp = pd.Series(x_sup,name='input')
 y_temp = pd.Series(y_sup,name='output')
