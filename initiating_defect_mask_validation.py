@@ -68,35 +68,42 @@ def process_row(row):
     try:
         img = row['imgs']
         img = cv2.resize(img,(1024,1024), interpolation = cv2.INTER_AREA)
-        if img.ndim == 2:  # Grayscale image
-            img = np.repeat(img[:, :, np.newaxis], 3, axis=2)
+        # if img.ndim == 2:  # Grayscale image
+        #     img = np.repeat(img[:, :, np.newaxis], 3, axis=2)
         SAM.set_image(img)
         output = SAM.predict(
             point_coords = np.expand_dims(row['xy'],axis=0),
             point_labels=np.array([1])
         )
-        return output[0]
+        return output[0]*255
     except Exception as e:
         print(row.index)
         print(e)
-        return False
+        return np.nan
 def process_mask(mask):
     # Find connected components
-    mask = np.array(mask, dtype=np.uint8)
-    num_labels, labels = cv2.connectedComponents(mask)
-    
-    # Count components (excluding background)
-    num_objects = num_labels - 1
-    
-    # Find largest object
-    largest_object_mask = np.zeros_like(mask)
-    if num_objects > 0:
-        # Get unique labels, excluding background (0)
-        label_counts = [np.sum(labels == i) for i in range(1, num_labels)]
-        largest_object_label = np.argmax(label_counts) + 1
-        largest_object_mask = (labels == largest_object_label).astype(np.uint8) * 255
-    
-    return num_objects, largest_object_mask
+    try:
+        print(type(mask))
+        mask = np.array(mask, dtype=np.uint8)
+        print(mask.sum())
+        print(mask.shape)
+        num_labels, labels = cv2.connectedComponents(mask)
+        
+        # Count components (excluding background)
+        num_objects = num_labels - 1
+        
+        # Find largest object
+        largest_object_mask = np.zeros_like(mask)
+        if num_objects > 0:
+            # Get unique labels, excluding background (0)
+            label_counts = [np.sum(labels == i) for i in range(1, num_labels)]
+            largest_object_label = np.argmax(label_counts) + 1
+            largest_object_mask = (labels == largest_object_label).astype(np.uint8) * 255
+        
+        return largest_object_mask
+    except Exception as e:
+        print(e)
+        return np.NAN
 
 # %%
 if __name__=="__main__":
@@ -108,14 +115,14 @@ if __name__=="__main__":
     columns = ["screen_portion","max_sharpness","aspect_ratio","perimeter","pixels"]
     df[columns] = df[columns].replace([np.inf, -np.inf], np.nan)
     df = df.dropna()
-    path = "/mnt/vstor/CSE_MSE_RXF131/cradle-members/mds3/aml334/mds3-advman-2/topics/aml-fractography/sam"
-    sam_checkpoint = path +"/sam_vit_h_4b8939.pth"
+    # path = "/mnt/vstor/CSE_MSE_RXF131/cradle-members/mds3/aml334/mds3-advman-2/topics/aml-fractography/sam"
+    # # sam_checkpoint = path +"/sam_vit_h_4b8939.pth"
     # url = "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
     # sam_checkpoint = urllib.request.urlretrieve(url)
 
     model_type = "vit_h"
 
-    sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
+    sam = sam_model_registry[model_type](checkpoint="sam_vit_h_4b8939.pth")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -134,20 +141,23 @@ if __name__=="__main__":
     cross_entropy = []
     best_rows = []
     for group_string, group in df.groupby(by="sample_id"):
-        try:
-            print(group_string+" running")
-            group['temp'] =df.apply(process_row,axis=1)     
-            print("row processed")       
-            group['SAM_output'] =df.apply(process_mask)
-            print("SAM output found")
-            group["cross_entropy"] = df.apply(lambda x: torch.nn.functional.binary_cross_entropy(x['imgs'],x['SAM_output']),axis=1)
-            print("cross entropy found")
-            best_rows.append(
-                group.loc[group['cross_entropy'].idxmin()]
+        print(group_string+" running")
+        group['temp'] =group.apply(process_row,axis=1)
+        print(group['temp'])     
+        print("row processed")       
+        group['SAM_output'] =group['temp'].apply(process_mask)
+        print("SAM output found")
+        group["cross_entropy"] = group.apply(
+            lambda x: torch.nn.functional.binary_cross_entropy(
+                torch.Tensor(x['imgs']),
+                torch.Tensor(x['SAM_output'])
             )
-            print(group_string+" ran successfully")
-        except Exception as e:
-            print(f"Error in group {group_string}: {e}")
+        ,axis=1)
+        print("cross entropy found")
+        best_rows.append(
+            group.loc[group['cross_entropy'].idxmin()]
+        )
+        print(group_string+" ran successfully")
     best_rows_df = pd.DataFrame(best_rows)
     print(best_rows_df)
     best_rows.to_csv("best_rows.csv")
