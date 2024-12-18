@@ -64,18 +64,25 @@ def find_centroid(numpy_array):
     x0 = df['x'].sum()/df['x'].count()
     y0 = df['y'].sum()/df['y'].count()
     return [x0,y0]
+
+def format_to_SAM(img):
+    if(type(img)!=np.ndarray):
+        raise TypeError(f"Input to form_to_SAM function must be numpy array, was{type(img)}")
+    img = cv2.resize(img,(1024,1024), interpolation = cv2.INTER_AREA)
+    if img.ndim == 2:  # Grayscale image
+        img = np.repeat(img[:, :, np.newaxis], 3, axis=2)
+    img = np.array(img,dtype=np.uint8)
+    return img
+
 def process_row(row):
     try:
-        img = row['imgs']
-        img = cv2.resize(img,(1024,1024), interpolation = cv2.INTER_AREA)
-        # if img.ndim == 2:  # Grayscale image
-        #     img = np.repeat(img[:, :, np.newaxis], 3, axis=2)
+        img = format_to_SAM(row['imgs'])
         SAM.set_image(img)
         output = SAM.predict(
             point_coords = np.expand_dims(row['xy'],axis=0),
             point_labels=np.array([1])
         )
-        return output[0]*255
+        return np.array(output[0]*255,dtype=np.uint8)
     except Exception as e:
         print(row.index)
         print(e)
@@ -83,10 +90,12 @@ def process_row(row):
 def process_mask(mask):
     # Find connected components
     try:
-        print(type(mask))
-        mask = np.array(mask, dtype=np.uint8)
-        print(mask.sum())
-        print(mask.shape)
+        # print(type(mask))
+        # mask = np.array(mask, dtype=np.uint8)
+        # print(mask.sum())
+        # print(mask.shape)
+        mask = np.transpose(mask, (1, 2, 0))
+        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         num_labels, labels = cv2.connectedComponents(mask)
         
         # Count components (excluding background)
@@ -104,11 +113,33 @@ def process_mask(mask):
     except Exception as e:
         print(e)
         return np.NAN
+def invert_mask(mask):
+    """
+    Invert a binary mask (0 and 255) by swapping background and foreground.
+    Parameters:
+        mask (np.ndarray): 2D numpy array representing a binary mask, 
+                        expected to have values either 0 or 255.
 
+    Returns:
+        np.ndarray: Inverted mask.
+    """
+    if not isinstance(mask, np.ndarray):
+        raise TypeError("Input must be a numpy array.")
+
+    if mask.ndim != 2:
+        raise ValueError("Input mask must be a 2D array.")
+
+    # Ensure mask is uint8
+    mask = mask.astype(np.uint8, copy=False)
+
+    # Invert the mask
+    inverted = 255 - mask
+    return inverted
 # %%
 if __name__=="__main__":
     print(__name__+" script being executed")
     # %%
+    '''Load df and SAM'''
     combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
     points_df = combined_df[~combined_df['points'].isna()]
     df = initiating_defect_features.make_feature_df(points_df)
@@ -135,36 +166,77 @@ if __name__=="__main__":
     SAM = SamPredictor(sam)
 
     np.random.seed(3)
-
+    
     df['xy'] = df['imgs'].apply(find_centroid).apply(np.array)
     SAM_outputs = []
     cross_entropy = []
     best_rows = []
+
+
+    # %%
+    '''Find Best Rows'''
+    df['SAM_raw_output'] =df.apply(process_row,axis=1)
+    df['SAM_processed_output'] = df['SAM_raw_output'].apply(process_mask).apply(invert_mask)
+    df["cross_entropy"] = df.apply(
+        lambda x: torch.nn.functional.binary_cross_entropy(
+            torch.Tensor(cv2.resize(x['imgs'],(1024,1024))/255),
+            torch.Tensor(x['SAM_processed_output']/255)
+        )
+    ,axis=1).apply(lambda x: x.detach().item())
+
     for group_string, group in df.groupby(by="sample_id"):
-        print(group_string+" running")
-        group['temp'] =group.apply(process_row,axis=1)
-        print(group['temp'])     
-        print("row processed")       
-        group['SAM_output'] =group['temp'].apply(process_mask)
-        print("SAM output found")
-        group["cross_entropy"] = group.apply(
-            lambda x: torch.nn.functional.binary_cross_entropy(
-                torch.Tensor(x['imgs']),
-                torch.Tensor(x['SAM_output'])
-            )
-        ,axis=1)
-        print("cross entropy found")
+        # print(group_string+" running")
+        # group['SAM_output'] =group.apply(process_row,axis=1).apply(process_mask)
+        # group["cross_entropy"] = group.apply(
+        #     lambda x: torch.nn.functional.binary_cross_entropy(
+        #         torch.Tensor(cv2.resize(x['imgs'],(1024,1024))/255),
+        #         torch.Tensor(x['SAM_output']/255)
+        #     )
+        # ,axis=1)
         best_rows.append(
             group.loc[group['cross_entropy'].idxmin()]
         )
-        print(group_string+" ran successfully")
-    best_rows_df = pd.DataFrame(best_rows)
-    print(best_rows_df)
-    best_rows.to_csv("best_rows.csv")
+        # print(group_string+" ran successfully")
+    # best_rows_df = pd.DataFrame(best_rows)
+    # print(best_rows_df)
+    # best_rows_df.to_csv("best_rows.csv")
     # df['SAM_output']=df.apply(process_row,axis=1).apply(initiating_defect_features.process_mask)
     # df['cross_entropy']=df.apply(lambda x: torch.nn.functional.binary_cross_entropy(x['imgs'],x['SAM_output']),axis=1)
     #  %%
+    '''Plotting'''
+    # import matplotlib.pyplot as plt
+    # fig, ax = plt.subplots(1, 2, tight_layout=True)
+    # ax[0].imshow(cv2.resize(df['imgs'].iloc[0],(1024,1024)))
+    # ax[1].imshow(df['SAM_processed_output'].iloc[0])
+    # plt.savefig("example_SAM correlation.png")
+    # print(df['cross_entropy'].iloc[0])
+    # print(f"Input shape: {df['imgs'].iloc[0].shape}")
+    # print(f"Output shape: {df['SAM_processed_output'].iloc[0].shape}")
     
+    # fig, ax = plt.subplots(1, 1, tight_layout=True)
+    # ax.hist(df['cross_entropy'],bins=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0])
+
+    # # Not as effective in LoF region
+    # fig, ax = plt.subplots(1, 1, tight_layout=True)
+    # ax.scatter(df['energy_density'],df['cross_entropy'])
+
+    # # Can't be too big
+    # fig, ax = plt.subplots(1, 1, tight_layout=True)
+    # ax.scatter(df['screen_portion'],df['cross_entropy'])
+
+    # # Roughly normally distributed vs stress
+    # fig, ax = plt.subplots(1, 1, tight_layout=True)
+    # scatter = ax.scatter(
+    #     x=df['stress_Mpa'],
+    #     y=df['cross_entropy'],
+    #     c=df['energy_density'],
+    #     cmap='inferno',  # or another colormap you prefer
+    #     vmin=df['energy_density'].min(),
+    #     vmax=df['energy_density'].max()/2
+    # )
+
+    # # If you want a colorbar:
+    # fig.colorbar(scatter, ax=ax, label='energy_density')
 # %%
 else:
     print(__name__+" functions loaded")
