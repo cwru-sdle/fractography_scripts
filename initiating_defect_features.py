@@ -246,72 +246,120 @@ def plot_feature_df(df):
     g = sns.pairplot(df, kind="reg", plot_kws={"line_kws": {"color": "red"}})
     # Add R-squared annotations to each plot
     g.map(annotate_r2)
-def regression_on_df(df):
-    metric_used_list = []
-    regression_type = []
-    energy_density_list = []
-    laser_power_list = []
-    scan_speed_list = []
-    aspect_ratio_list = []
-    sharpness_list = []
-    y_pred_list = []
-    mse_list = []
-    r2_list = []
-    for metric in ['log_stress','stress']:
-        for regression in [multiple_linear_regression,polynomial_regression,ridge_regression,lasso_regression]:
-            for inputs in list(itertools.product([True, False], repeat=5)):
-                if True in inputs: # There needs to be at least 1 predictor
-                    regression_type.append(regression.__name__)
-                    inputs_columns = []
-                    if inputs[0]:
-                        energy_density_list.append(True)
-                        inputs_columns.append('energy_density')
-                    else:
-                        energy_density_list.append(False)
-                    if inputs[1]:
-                        laser_power_list.append(True)
-                        inputs_columns.append('laser_power')
-                    else:
-                        laser_power_list.append(False)
-                    if inputs[2]:
-                        scan_speed_list.append(True)
-                        inputs_columns.append('laser_speed')
-                    else:
-                        scan_speed_list.append(False)
-                    if inputs[3]:
-                        aspect_ratio_list.append(True)
-                        inputs_columns.append('aspect_ratio')
-                    else:
-                        aspect_ratio_list.append(False)
-                    if inputs[4]:
-                        sharpness_list.append(True)
-                        inputs_columns.append('max_sharpness')
-                    else:
-                        sharpness_list.append(False)
-                    if metric =='log_stress':
-                        Y = df['cycles'].apply(math.log)
-                        metric_used_list.append('log(stress)')
-                    elif metric =='stress':
-                        Y = df['cycles'].apply(math.log)*df['stress_Mpa']
-                        metric_used_list.append('stress')
-                    X = df[inputs_columns]
-                    model, y_pred, mse, r2 = regression(X,Y)
-                    mse_list.append(mse)
-                    r2_list.append(r2)
+# def regression_on_df(df,regression_function_list=[multiple_linear_regression,polynomial_regression,ridge_regression,lasso_regression]):
+#     metric_used_list = []
+#     regression_type = []
+#     energy_density_list = []
+#     laser_power_list = []
+#     scan_speed_list = []
+#     aspect_ratio_list = []
+#     sharpness_list = []
+#     y_pred_list = []
+#     mse_list = []
+#     r2_list = []
+#     for metric in ['log_stress','stress']:
+#         for regression in regression_function_list:
+#             for inputs in list(itertools.product([True, False], repeat=5)):
+#                 if True in inputs: # There needs to be at least 1 predictor
+#                     regression_type.append(regression.__name__)
+#                     inputs_columns = []
+#                     if inputs[0]:
+#                         energy_density_list.append(True)
+#                         inputs_columns.append('energy_density')
+#                     else:
+#                         energy_density_list.append(False)
+#                     if inputs[1]:
+#                         laser_power_list.append(True)
+#                         inputs_columns.append('laser_power')
+#                     else:
+#                         laser_power_list.append(False)
+#                     if inputs[2]:
+#                         scan_speed_list.append(True)
+#                         inputs_columns.append('laser_speed')
+#                     else:
+#                         scan_speed_list.append(False)
+#                     if inputs[3]:
+#                         aspect_ratio_list.append(True)
+#                         inputs_columns.append('aspect_ratio')
+#                     else:
+#                         aspect_ratio_list.append(False)
+#                     if inputs[4]:
+#                         sharpness_list.append(True)
+#                         inputs_columns.append('max_sharpness')
+#                     else:
+#                         sharpness_list.append(False)
+#                     if metric =='log_stress':
+#                         Y = df['cycles'].apply(math.log)
+#                         metric_used_list.append('log(stress)')
+#                     elif metric =='stress':
+#                         Y = df['cycles'].apply(math.log)*df['stress_Mpa']
+#                         metric_used_list.append('stress')
+#                     X = df[inputs_columns]
+#                     model, y_pred, mse, r2 = regression(X,Y)
+#                     mse_list.append(mse)
+#                     r2_list.append(r2)
 
-    regression_dict = {
-        "metric_used":metric_used_list,
-        "regression_type":regression_type,
-        "energy_density":energy_density_list,
-        "laser_power":laser_power_list,
-        "scan_speed":scan_speed_list,
-        "aspect_ratio":aspect_ratio_list,
-        "sharpness":sharpness_list,
-        "mse":mse_list,
-        "r2":r2_list
-    }
-    df_results = pd.DataFrame(regression_dict)
+#     regression_dict = {
+#         "metric_used":metric_used_list,
+#         "regression_type":regression_type,
+#         "energy_density":energy_density_list,
+#         "laser_power":laser_power_list,
+#         "scan_speed":scan_speed_list,
+#         "aspect_ratio":aspect_ratio_list,
+#         "sharpness":sharpness_list,
+#         "mse":mse_list,
+#         "r2":r2_list
+#     }
+#     df_results = pd.DataFrame(regression_dict)
+#     return df_results
+
+def regression_on_df(
+    df, 
+    regression_function_list=[multiple_linear_regression, polynomial_regression, ridge_regression, lasso_regression],
+    features = ['energy_density', 'laser_power', 'laser_speed', 'aspect_ratio', 'max_sharpness'],
+    metrics = ['log_stress', 'stress']):
+    results = []
+
+    for metric in metrics:
+        for regression in regression_function_list:
+            # Generate all True/False combinations for each feature
+            for inputs in itertools.product([True, False], repeat=len(features)):
+                if any(inputs):  # At least one predictor must be True
+                    # Determine which features are selected
+                    selected_features = [f for f, include in zip(features, inputs) if include]
+
+                    # Prepare Y based on the metric
+                    if metric == 'log_stress':
+                        Y = df['cycles'].apply(math.log)
+                        metric_used = 'log(stress)'
+                    else:  # metric == 'stress'
+                        Y = df['cycles'].apply(math.log)*df['stress_Mpa']
+                        metric_used = 'stress'
+
+                    # Prepare X from selected features
+                    X = df[selected_features]
+
+                    # Run the regression
+                    model, y_pred, mse, r2 = regression(X, Y)
+
+                    # Build the result dictionary
+                    result = {
+                        "metric_used": metric_used,
+                        "regression_type": regression.__name__,
+                        "mse": mse,
+                        "r2": r2
+                    }
+                    
+                    # Add information about which features were used
+                    for f, include in zip(features, inputs):
+                        result[f] = include
+
+                    results.append(result)
+
+    # Convert the results into a DataFrame
+    df_results = pd.DataFrame(results)
     return df_results
+
 # %%
 if __name__=="__main__":
     print(__name__+" script running")

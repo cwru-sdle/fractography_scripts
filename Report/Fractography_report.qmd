@@ -101,7 +101,7 @@ Hypothesis testing is used to show the correlation between the extracted defects
 
 organize_data is a script used to create the dataframe used in the rest of the report. It is imported here because some functions used to organize the data are also helpful in analysis.
 
-```{python package import,echo=TRUE}
+```{python package import,echo=FALSE}
 import os
 import sys
 import cv2
@@ -118,9 +118,12 @@ import scipy
 import seaborn
 import math
 import joblib
+import torch
 sys.path.append("/mnt/vstor/CSE_MSE_RXF131/cradle-members/mds3/aml334/mds3-advman-2/topics/aml-fractography/fractography_scripts")
 import organize_data
 import initiating_defect_features
+import initiating_defect_mask_validation
+from segment_anything import sam_model_registry, SamPredictor
 ```
 
 In addition to these package, the recent release of Meta's foundation models segment anything and segment anything 2 will be explored for use in characterizing the unsegmented initiating defects from high resolution images. [@kirillov_segment_2023] [@ravi2024sam2]
@@ -146,7 +149,7 @@ The full data cleaning and formation of the combined_df can be seen in organize_
 
 ## Dataset Counts
 
-```{python import data,error=FALSE,echo=TRUE}
+```{python import data,error=FALSE,echo=FALSE}
 combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
 organize_data.print_column_counts(combined_df)
 print(combined_df['image_class'].value_counts())
@@ -160,7 +163,7 @@ with_polygon_df['sample_id'].value_counts().head(10)
 
 Below is a histogram and and scatter plot of the difference of two samples which had identical manufacturing and testing conditions. While this is a 
 
-```{python parameters vs cycles,error=FALSE,results='hide',echo=TRUE}
+```{python parameters vs cycles,error=FALSE,results='hide',echo=FALSE}
 xy_df = combined_df[~combined_df['energy_density_J_mm3'].isna() & ~combined_df['cycles'].isna()]
 plt.rcParams.update({'font.size': 32})  # Set font size for all elements
 hist_x = []
@@ -180,7 +183,7 @@ box_ax.boxplot(hist_x)
 box_fig.show()
 ```
 
-```{python cucles vs energy density,error=FALSE,results='hide',echo=TRUE}
+```{python cucles vs energy density,error=FALSE,results='hide',echo=FALSE}
 xy_df['cycles_stress'] = xy_df['cycles'].apply(lambda x: math.log(x))*xy_df['test_stress_Mpa']
 SN_fig, SN_ax = plt.subplots(figsize=(16, 8))
 SN_ax.scatter(xy_df['energy_density_J_mm3'],xy_df['cycles_stress'])
@@ -196,10 +199,10 @@ SN_fig.show()
 
 The above figures show that the spreadsheets do not contain all of the necessary information, and from theory, we know that defects may be a leading cause. This is commonly visualized using log(stress) vs log(cycle) (SN) plots. We can also color the points according to their energy density.
 
-```{python SN curve,error=FALSE,results='hide',echo=TRUE}
+```{python SN curve,error=FALSE,results='hide',echo=FALSE}
 cmap = plt.get_cmap('inferno')
 
-fig, (ax_scatter,ax_hist_x) = plt.subplots(2,1,figsize=(14,10),height_ratios=[3,1])
+fig, (ax_scatter,ax_hist_x) = plt.subplots(2,1,figsize=(16,10),height_ratios=[3,1])
 
 groups = combined_df.sort_values(by='cycles').groupby(['energy_density_J_mm3'])
 for i, (group, group_data) in enumerate(groups):
@@ -349,7 +352,7 @@ x_SAM_process = x_SAM_process[~np.isnan(x_SAM_process)]
 statistic, p_value = scipy.stats.ks_2samp(np.array(x_not_SAM_process),np.array(x_SAM_process))
 ```
 
-```{python,echo=TRUE}
+```{python SAM success vs Process Parameters hypothesis test,echo=FALSE}
 print("P value: "+str(p_value))
 if p_value < 0.05:
     print("Reject the null hypothesis: distributions are different")
@@ -395,7 +398,7 @@ x_SAM_test = x_SAM_test[~np.isnan(x_SAM_test)]
 statistic, p_value = scipy.stats.ks_2samp(np.array(x_not_SAM_test),np.array(x_SAM_test))
 ```
 
-```{python,echo=TRUE}
+```{python SAM success vs testing hypothesis test,echo=FALSE}
 print("P value: "+str(p_value))
 if p_value < 0.05:
     print("Reject the null hypothesis: distributions are different")
@@ -409,18 +412,163 @@ The hypothesis test is again narrowly failed, so the success and failure rate di
 
 ```{r Metrics explination figure,out.width="100%"}
 #| echo: false
-#| fig-cap: "Well Optimized Attention Unet Architecture"
+#| fig-cap: "Sharpness Figure"
 knitr::opts_chunk$set(fig.width = 8, fig.height = 6)
 knitr::include_graphics("Figures/Sharpness_fig.png")
 ```
 
 From knowledge of fracture mechanics, we know there is a link between the shape of the initiating defect and the resulting fatigue properties, so it should be possible to extract features from these images which predict fatigue performance. The most common feature is the aspect ratio. However, as shown in figure 8, shape 1 and 3 have similar aspect ratio, but shape 1 should create a significantly worse concentrating factor because of the sharp edge in the bottom right corner. Sharpness measures the change in radial distance from the centroid, which better captures these sharp edges, as can be seen by the high value for both shape 1 and 2. 
 
-```{python initiating_defect_features,echo=TRUE,error=FALSE}
-{{< include ../initiating_defect_features.py >}}
+```{python initiating_defect_features,echo=FALSE,error=FALSE}
+combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
+points_df = combined_df[~combined_df['points'].isna()]
+print(points_df['image_class'].value_counts())
+print(points_df['sample_id'].value_counts().head(10))
+df = initiating_defect_features.make_feature_df(points_df)
+columns = ["screen_portion","max_sharpness","aspect_ratio","perimeter","pixels"]
+df[columns] = df[columns].replace([np.inf, -np.inf], np.nan)
+df = df.dropna()
+results_df = initiating_defect_features.regression_on_df(df)
+print(results_df.loc[results_df["r2"].idxmax()])
+print(results_df.loc[results_df[(results_df['aspect_ratio']==False) &(results_df['sharpness']==False)]["r2"].idxmax()])    
+initiating_defect_features.plot_feature_df(df[columns])
 ```
 
 From the above correlation plot, sharpness and aspect ratio do vary based on the portion of the screen the defect takes up. This means the measurement is independent of imaging magnification. From the regression information, we can see that the best regression was a polynomial regression with all processing parameters and the sharpness, with and $R^2=0.465$, with the best regression excluding extracted features having an $R^2=0.441$. This implies that the extracted features can marginally improve prediction of mechanical properties.
+
+```{python initiating_defect_mask_validation,echo=FALSE,error=FALSE,results='hide'}
+combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
+points_df = combined_df[~combined_df['points'].isna()]
+df = initiating_defect_features.make_feature_df(points_df)
+columns = ["screen_portion","max_sharpness","aspect_ratio","perimeter","pixels"]
+df[columns] = df[columns].replace([np.inf, -np.inf], np.nan)
+df = df.dropna()
+# path = "/mnt/vstor/CSE_MSE_RXF131/cradle-members/mds3/aml334/mds3-advman-2/topics/aml-fractography/sam"
+# # sam_checkpoint = path +"/sam_vit_h_4b8939.pth"
+# url = "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
+# sam_checkpoint = urllib.request.urlretrieve(url)
+
+model_type = "vit_h"
+
+sam = sam_model_registry[model_type](checkpoint="/mnt/vstor/CSE_MSE_RXF131/cradle-members/mds3/aml334/mds3-advman-2/topics/aml-fractography/fractography_scripts/sam_vit_h_4b8939.pth")
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Only move `sam` to GPU if an NVIDIA GPU is available
+if torch.cuda.is_available():
+    sam.to(device=device)
+    print("Model moved to GPU.")
+else:
+    print("No NVIDIA GPU detected. Using CPU.")
+SAM = SamPredictor(sam)
+
+np.random.seed(3)
+
+df['xy'] = df['imgs'].apply(initiating_defect_mask_validation.find_centroid).apply(np.array)
+best_rows = []
+
+
+df['SAM_raw_output'] =df.apply(lambda x: initiating_defect_mask_validation.process_row(x['imgs'],x['xy'],SAM),axis=1)
+df['SAM_processed_output'] = df['SAM_raw_output'].apply(initiating_defect_mask_validation.process_mask).apply(initiating_defect_mask_validation.invert_mask)
+df["cross_entropy"] = df.apply(
+    lambda x: torch.nn.functional.binary_cross_entropy(
+        torch.Tensor(cv2.resize(x['imgs'],(1024,1024))/255),
+        torch.Tensor(x['SAM_processed_output']/255)
+    )
+,axis=1).apply(lambda x: x.detach().item())
+
+for group_string, group in df.groupby(by="sample_id"):
+    # print(group_string+" running")
+    # group['SAM_output'] =group.apply(process_row,axis=1).apply(process_mask)
+    # group["cross_entropy"] = group.apply(
+    #     lambda x: torch.nn.functional.binary_cross_entropy(
+    #         torch.Tensor(cv2.resize(x['imgs'],(1024,1024))/255),
+    #         torch.Tensor(x['SAM_output']/255)
+    #     )
+    # ,axis=1)
+    best_rows.append(
+        group.loc[group['cross_entropy'].idxmin()]
+    )
+hist_fig, hist_ax = plt.subplots(1, 1, tight_layout=True)
+hist_ax.hist(df['cross_entropy'],bins=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0])
+hist_fig.show()
+```
+
+From the above graphic, we can see that the majority of samples are high quality.
+
+```{python portion vs entropy, echo=FALSE}
+energy_density_label="Energy Density [J/mm^3]"
+portion_vs_entropy_fig, (portion_vs_entropy_ax,good_portion_vs_entropy_ax,bad_portion_vs_entropy_ax) = plt.subplots(3, 1, tight_layout=True,figsize=(16,20))
+portion_vs_entropy_scatter = portion_vs_entropy_ax.scatter(df['screen_portion'],df['cross_entropy'],
+    c=df['energy_density'],
+    cmap='inferno',  # or another colormap you prefer
+    vmin=df['energy_density'].min(),
+    vmax=df['energy_density'].max()/2)
+portion_vs_entropy_ax.set_xlabel("Portion of Screen")
+portion_vs_entropy_ax.set_ylabel("Binary Cross Entropy")
+print(df['cross_entropy'].apply(lambda x:x<2).value_counts().rename("Enrtopy<2"))
+good_df = df[df['cross_entropy'].apply(lambda x:x<2)].copy()
+good_portion_vs_entropy_scatter = good_portion_vs_entropy_ax.scatter(good_df['screen_portion'],good_df['cross_entropy'],
+    c=good_df['energy_density'],
+    cmap='inferno',  # or another colormap you prefer
+    vmin=good_df['energy_density'].min(),
+    vmax=good_df['energy_density'].max()/2)
+good_portion_vs_entropy_ax.set_xlabel("Portion of Screen")
+good_portion_vs_entropy_ax.set_ylabel("Binary Cross Entropy")
+# Compute a linear fit using numpy's polyfit
+x = good_df['screen_portion'].values
+y = good_df['cross_entropy'].values
+m, b = np.polyfit(x, y, 1)
+y_pred = m * x + b
+y_mean = np.mean(y)
+ss_tot = np.sum((y - y_mean)**2)
+ss_res = np.sum((y - y_pred)**2)
+r_squared = 1 - (ss_res / ss_tot)
+# Plot the linear regression line
+good_portion_vs_entropy_ax.plot(x, y_pred, color='red', label=f'{round(m,1)}*x+{round(b,1)}, R^2={round(r_squared,3)}')
+bad_df = df[df['cross_entropy'].apply(lambda x:x>2)].copy()
+bad_portion_vs_entropy_scatter = bad_portion_vs_entropy_ax.scatter(bad_df['screen_portion'],bad_df['cross_entropy'],
+    c=bad_df['energy_density'],
+    cmap='inferno',  # or another colormap you prefer
+    vmin=bad_df['energy_density'].min(),
+    vmax=bad_df['energy_density'].max()/2)
+bad_portion_vs_entropy_ax.set_xlabel("Portion of Screen")
+bad_portion_vs_entropy_ax.set_ylabel("Binary Cross Entropy")
+# Compute a linear fit using numpy's polyfit
+x = bad_df['screen_portion'].values
+y = bad_df['cross_entropy'].values
+m, b = np.polyfit(x, y, 1)
+y_pred = m * x + b
+y_mean = np.mean(y)
+ss_tot = np.sum((y - y_mean)**2)
+ss_res = np.sum((y - y_pred)**2)
+r_squared = 1 - (ss_res / ss_tot)
+m, b = np.polyfit(bad_df['screen_portion'], bad_df['cross_entropy'], 1)
+bad_portion_vs_entropy_ax.plot(x, y_pred, color='red', label=f'{round(m,1)}*x+{round(b,1)},R^2={round(r_squared,3)}')
+bad_portion_vs_entropy_ax.legend()
+good_portion_vs_entropy_ax.legend()
+portion_vs_entropy_fig.colorbar(portion_vs_entropy_scatter, ax=portion_vs_entropy_ax, label=energy_density_label)
+portion_vs_entropy_fig.colorbar(good_portion_vs_entropy_scatter, ax=good_portion_vs_entropy_ax, label=energy_density_label)
+portion_vs_entropy_fig.colorbar(bad_portion_vs_entropy_scatter, ax=bad_portion_vs_entropy_ax, label=energy_density_label)
+portion_vs_entropy_fig.show()
+```
+
+During segmentation, it was observed that there seemed to be an ideal size where the model could more easily segment the defects. This can be seen in the above graph where in both low and high quality samples, the larger the sample on the screen the less agreement it had with the existing mask.
+
+```{python energy density vs entropy, echo=FALSE}
+entropy_vs_energy_fig, entropy_vs_energy_ax = plt.subplots(1, 1, tight_layout=True)
+entropy_vs_energy_scatter = entropy_vs_energy_ax.scatter(df['energy_density'],df['cross_entropy'],
+    c=df['energy_density'],
+    cmap='inferno',  # or another colormap you prefer
+    vmin=df['energy_density'].min(),
+    vmax=df['energy_density'].max()/2)
+entropy_vs_energy_ax.set_xlabel("Energy Density [J/mm^3]")
+entropy_vs_energy_ax.set_ylabel("Binary Cross Entropy")
+entropy_vs_energy_fig.colorbar(entropy_vs_energy_scatter, ax=entropy_vs_energy_ax, label=energy_density_label)
+entropy_vs_energy_fig.show()
+```
+
+We can see that the model performs well.
 
 # Discussion
 
@@ -466,4 +614,10 @@ This project showed that prediction of fatigue performance can be improved with 
 
 ```{python, eval = FALSE}
 {{< include ../initiating_defect_features.py >}}
+```
+
+## initiating_defect_mask_validation.py
+
+```{python, eval = FALSE}
+{{< include ../initiating_defect_mask_validation.py >}}
 ```
