@@ -8,80 +8,47 @@ import cv2
 import torch
 import matplotlib.pyplot as plt
 import sklearn
-
 import initiating_defect_features
-sys.path.append("pykan/")
 from segment_anything import sam_model_registry, SamPredictor
+sys.path.append("/mnt/vstor/CSE_MSE_RXF131/cradle-members/mds3/aml334/mds3-advman-2/topics/aml-fractography/fractography_scripts/pykan/")
 from pykan.kan import *
 
 energy_density_label = "Energy Density [J/mm^3]"
 
-def multiple_linear_regression(X,Y):
-    # Sklearn Linear Regression
+def KAN_regression(X,Y):
     X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, Y, test_size=0.2, random_state=42)
-    
-    # Scale features
-    scaler = sklearn.preprocessing.StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
-    
     model = KAN(width=[X_test.shape[1],X_test.shape[1],1],k=3,device=device)
-    # Fit model
-    lr = sklearn.linear_model.LinearRegression()
-    lr.fit(X_train_scaled, y_train)
-    
-    # Predict and evaluate
-    y_pred = lr.predict(X_test_scaled)
-    mse = sklearn.metrics.mean_squared_error(y_test, y_pred)
-    r2 = sklearn.metrics.r2_score(y_test, y_pred)
-    return lr, y_pred, mse, r2
+    X_train = torch.Tensor(X_train.values).to(device)
+    X_test = torch.Tensor(X_test.values).to(device)
+    y_train = torch.Tensor(y_train.values).to(device)
+    y_test = torch.Tensor(y_test.values).to(device)
+    data = {
+        'train_input':X_train,
+        'test_input':X_test,
+        'train_label':y_train,
+        'test_label':y_test
+    }
+    model.fit(dataset=data, opt="LBFGS", steps=100, lamb=0.01, reg_metric='edge_forward_spline_n')
+    def r2_score(y_true, y_pred):
+        # Ensure that tensors are 1-dimensional if necessary
+        y_true = y_true.view(-1)
+        y_pred = y_pred.view(-1)
+        
+        # Compute the residual sum of squares
+        ss_res = torch.sum((y_true - y_pred) ** 2)
+        
+        # Compute the total sum of squares (proportional to variance of the data)
+        ss_tot = torch.sum((y_true - torch.mean(y_true)) ** 2)
+        mse = ss_res / y_true.size(0)
 
-# def kan_regression(X,Y)
-#     model = KAN(width=[2,5,1], grid=5, k=3, seed=0)
-#     dataset = {
-#         "train_input":X,
-#         "train_label":Y
-#     }
-#     model.train(dataset, opt="LBFGS", steps=20, lamb=0.01, lamb_entropy=10.)
-#     model.
-
-
-# dataset = {
-#     "train_input" = df[['max_sharpness','aspect_ratio','pixel_perimeter_ratio','energy_density']],
-#     "train_label" = df.apply(lambda x: x['cycles'].apply(math.log)*x['stress_Mpa'],axis=1)
-# }
-
-# output =dataframe_to_tensor(
-#     pd.DataFrame(
-#         df.apply(lambda x: x['cycles'].apply(math.log)*x['stress_Mpa'],axis=1)))
-# inpu = dataframe_to_tensor(
-#     df[['max_sharpness','aspect_ratio','pixel_perimeter_ratio','energy_density']]
-# )
-# dataset = {
-#     "train_input":output,
-#     "train_label":inpu
-# }
-# model = KAN(width=[dataset["train_input"].shape[-1],5,dataset['train_label'].shape[-1]], grid=5, k=3, seed=0)
-# model.train(dataset, opt="LBFGS", steps=20, lamb=0.01, lamb_entropy=10.)
-
-def dataframe_to_tensor(df):
-    """
-    Convert a DataFrame of numerical data into a batched tensor.
-    
-    Parameters:
-        df (pd.DataFrame): DataFrame containing numerical values.
-    
-    Returns:
-        torch.Tensor: Tensor of shape (df.shape[0], df.shape[1]) containing the data from the DataFrame.
-    """
-    # Ensure that the DataFrame contains only numerical values
-    if not df.select_dtypes(include=['number']).shape[1] == df.shape[1]:
-        raise ValueError("DataFrame must contain only numerical data.")
-
-    # Convert the DataFrame to a tensor
-    tensor = torch.tensor(df.values, dtype=torch.float32)
-
-    return tensor
+        # Compute R²
+        # Add a small epsilon in the denominator if there's a chance of division by zero.
+        r2 = 1 - (ss_res / (ss_tot + 1e-12))
+        
+        return r2, mse
+    y_pred = model(data['test_input'])
+    r2, mse = r2_score(data['test_label'],y_pred)
+    return model, y_pred.item(), r2.item(), mse.item()
 
 def find_centroid(numpy_array):
     y,x= np.nonzero(numpy_array)
@@ -214,26 +181,26 @@ if __name__=="__main__":
         )
     best_rows_df = pd.DataFrame(best_rows)
     # best_rows_df.to_csv("best_rows.csv")
-    #  %%
-    '''Show Good Example'''
-    good_ex_fig, good_ex_ax = plt.subplots(1, 2, tight_layout=True)
-    min_idx = df['cross_entropy'].idxmin()
-    good_ex_ax[0].imshow(cv2.resize(df['imgs'].iloc[min_idx],(1024,1024)))
-    good_ex_ax[1].imshow(df['SAM_processed_output'].iloc[min_idx])
-    good_ex_fig.show()
-    print(df['cross_entropy'].iloc[min_idx])
-    print(f"Input shape: {df['imgs'].iloc[min_idx].shape}")
-    print(f"Output shape: {df['SAM_processed_output'].iloc[min_idx].shape}")
-    #  %%
-    '''Show Bad Example'''
-    bad_ex_fig, bad_ex_ax = plt.subplots(1, 2, tight_layout=True)
-    max_idx = df['cross_entropy'].idxmax()
-    bad_ex_ax[0].imshow(cv2.resize(df['imgs'].iloc[max_idx],(1024,1024)))
-    bad_ex_ax[1].imshow(df['SAM_processed_output'].iloc[max_idx])
-    bad_ex_fig.show()
-    print(df['cross_entropy'].iloc[max_idx])
-    print(f"Input shape: {df['imgs'].iloc[max_idx].shape}")
-    print(f"Output shape: {df['SAM_processed_output'].iloc[max_idx].shape}")
+    # #  %%
+    # '''Show Good Example'''
+    # good_ex_fig, good_ex_ax = plt.subplots(1, 2, tight_layout=True)
+    # min_idx = df['cross_entropy'].idxmin()
+    # good_ex_ax[0].imshow(cv2.resize(df['imgs'].iloc[min_idx],(1024,1024)))
+    # good_ex_ax[1].imshow(df['SAM_processed_output'].iloc[min_idx])
+    # good_ex_fig.show()
+    # print(df['cross_entropy'].iloc[min_idx])
+    # print(f"Input shape: {df['imgs'].iloc[min_idx].shape}")
+    # print(f"Output shape: {df['SAM_processed_output'].iloc[min_idx].shape}")
+    # #  %%
+    # '''Show Bad Example'''
+    # bad_ex_fig, bad_ex_ax = plt.subplots(1, 2, tight_layout=True)
+    # max_idx = df['cross_entropy'].idxmax()
+    # bad_ex_ax[0].imshow(cv2.resize(df['imgs'].iloc[max_idx],(1024,1024)))
+    # bad_ex_ax[1].imshow(df['SAM_processed_output'].iloc[max_idx])
+    # bad_ex_fig.show()
+    # print(df['cross_entropy'].iloc[max_idx])
+    # print(f"Input shape: {df['imgs'].iloc[max_idx].shape}")
+    # print(f"Output shape: {df['SAM_processed_output'].iloc[max_idx].shape}")
 
     # %%
     '''Hist Entropy'''    
@@ -256,13 +223,13 @@ if __name__=="__main__":
     good_pve_scatter = good_pve_ax.scatter(good_df['screen_portion'],good_df['cross_entropy'],
         c=good_df['energy_density'],
         cmap='inferno',  # or another colormap you prefer
-        vmin=good_df['energy_density'].min(),
-        vmax=good_df['energy_density'].max()/2)
+        vmin=df['energy_density'].min(),
+        vmax=df['energy_density'].max()/2)
     good_pve_ax.set_xlabel("Portion of Screen")
     good_pve_ax.set_ylabel("Binary Cross Entropy")
     # Compute a linear fit using numpy's polyfit
     good_x = good_df['screen_portion'].values
-    good_y = good_df['cross_entropy'].valuesgood_x
+    good_y = good_df['cross_entropy'].values
     good_m, good_b = np.polyfit(good_x, good_y, 1)
     good_y_pred = good_m * good_x + good_b
     good_y_mean = np.mean(good_y)
@@ -275,8 +242,8 @@ if __name__=="__main__":
     bad_pve_scatter = bad_pve_ax.scatter(bad_df['screen_portion'],bad_df['cross_entropy'],
         c=bad_df['energy_density'],
         cmap='inferno',  # or another colormap you prefer
-        vmin=bad_df['energy_density'].min(),
-        vmax=bad_df['energy_density'].max()/2)
+        vmin=df['energy_density'].min(),
+        vmax=df['energy_density'].max()/2)
     bad_pve_ax.set_xlabel("Portion of Screen")
     bad_pve_ax.set_ylabel("Binary Cross Entropy")
     # Compute a linear fit using numpy's polyfit
@@ -289,7 +256,7 @@ if __name__=="__main__":
     bad_ss_res = np.sum((bad_y - bad_y_pred)**2)
     bad_r_squared = 1 - (bad_ss_res / bad_ss_tot)
     bad_m, bad_b = np.polyfit(bad_df['screen_portion'], bad_df['cross_entropy'], 1)
-    bad_pve_ax.plot(x, y_pred, color='red', label=f'{round(bad_m,1)}*x+{round(bad_b,1)},R^2={round(bad_r_squared,3)}')
+    bad_pve_ax.plot(bad_x, bad_y_pred, color='red', label=f'{round(bad_m,1)}*x+{round(bad_b,1)},R^2={round(bad_r_squared,3)}')
     bad_pve_ax.legend()
     pve_fig.colorbar(bad_pve_scatter, ax=bad_pve_ax, label=energy_density_label)
     good_pve_ax.legend()
@@ -352,9 +319,7 @@ if __name__=="__main__":
     '''Regression Good Dataframe'''
     good_df[columns] = good_df[columns].replace([np.inf, -np.inf], np.nan)
     good_df = good_df.dropna()
-    
-    
-    .regression_on_df(good_df,
+    good_results_df = initiating_defect_features.regression_on_df(good_df,
         regression_function_list=regressions,
         features=features)
     # initiating_defect_features.plot_feature_df(good_df)
@@ -366,7 +331,7 @@ if __name__=="__main__":
     good_best_df = best_rows_df[best_rows_df['cross_entropy'].apply(lambda x:x<2)]
     good_best_df[features] = good_best_df[features].replace([np.inf, -np.inf], np.nan)
     good_best_df = good_best_df.dropna()
-    good_best_df_results = regression_on_df(
+    good_best_df_results = initiating_defect_features.regression_on_df(
         good_best_df,
         regression_function_list=regressions,
         features=features)

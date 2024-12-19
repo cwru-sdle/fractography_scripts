@@ -152,16 +152,15 @@ The full data cleaning and formation of the combined_df can be seen in organize_
 ```{python import data,error=FALSE,echo=FALSE}
 combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
 organize_data.print_column_counts(combined_df)
-print(combined_df['image_class'].value_counts())
-print('Unique samples:' +str(combined_df['sample_id'].nunique()))
+print(combined_df['image_class'].value_counts().rename("All image types"))
+print('Unique samples: ' +str(combined_df['sample_id'].nunique()))
 with_polygon_df = combined_df[~combined_df['points'].isna()]
-with_polygon_df['image_class'].value_counts()
-with_polygon_df['sample_id'].value_counts().head(10)
+with_polygon_df['image_class'].value_counts().rename("SAM Segmented Image Types")
 ```
 
 ## Difference in Cycles to Failure
 
-Below is a histogram and and scatter plot of the difference of two samples which had identical manufacturing and testing conditions. While this is a 
+Below is a histogram and and scatter plot of the difference of two samples which had identical manufacturing and testing conditions. While we can already see some trends emerging, with samples with both very high and low energy having worse fatigue performance, but the variation is still largely unaccounted for.
 
 ```{python parameters vs cycles,error=FALSE,results='hide',echo=FALSE}
 xy_df = combined_df[~combined_df['energy_density_J_mm3'].isna() & ~combined_df['cycles'].isna()]
@@ -206,13 +205,13 @@ fig, (ax_scatter,ax_hist_x) = plt.subplots(2,1,figsize=(16,10),height_ratios=[3,
 
 groups = combined_df.sort_values(by='cycles').groupby(['energy_density_J_mm3'])
 for i, (group, group_data) in enumerate(groups):
-        Cycles = list(map(math.log10,group_data['cycles']))
+        Cycles = group_data['cycles']
         Stress = list(map(math.log10,group_data['test_stress_Mpa']))
         ax_scatter.scatter(
             Cycles,
             Stress,
             color=cmap(group_data['energy_density_J_mm3']/100))
-ax_scatter.set_ylabel('log(Stress [Mpa])')
+ax_scatter.set_ylabel('Stress [Mpa]')
 # ax_scatter.set_xlabel('log(Cycles)')
 ax_scatter.set_title('Log-Log Scatter Plot of SN Data')
 # colorbar = fig.colorbar(ax.collections[0], ax=ax)
@@ -497,60 +496,63 @@ hist_fig.show()
 From the above graphic, we can see that the majority of samples are high quality.
 
 ```{python portion vs entropy, echo=FALSE}
-energy_density_label="Energy Density [J/mm^3]"
-portion_vs_entropy_fig, (portion_vs_entropy_ax,good_portion_vs_entropy_ax,bad_portion_vs_entropy_ax) = plt.subplots(3, 1, tight_layout=True,figsize=(16,20))
-portion_vs_entropy_scatter = portion_vs_entropy_ax.scatter(df['screen_portion'],df['cross_entropy'],
+pve_fig, (pve_ax,good_pve_ax,bad_pve_ax) = plt.subplots(3, 1, tight_layout=True,figsize=(16,20))
+pve_scatter = pve_ax.scatter(df['screen_portion'],df['cross_entropy'],
     c=df['energy_density'],
     cmap='inferno',  # or another colormap you prefer
     vmin=df['energy_density'].min(),
     vmax=df['energy_density'].max()/2)
-portion_vs_entropy_ax.set_xlabel("Portion of Screen")
-portion_vs_entropy_ax.set_ylabel("Binary Cross Entropy")
+pve_ax.set_xlabel("Portion of Screen")
+pve_ax.set_ylabel("Binary Cross Entropy")
 print(df['cross_entropy'].apply(lambda x:x<2).value_counts().rename("Enrtopy<2"))
 good_df = df[df['cross_entropy'].apply(lambda x:x<2)].copy()
-good_portion_vs_entropy_scatter = good_portion_vs_entropy_ax.scatter(good_df['screen_portion'],good_df['cross_entropy'],
+good_pve_scatter = good_pve_ax.scatter(good_df['screen_portion'],good_df['cross_entropy'],
     c=good_df['energy_density'],
     cmap='inferno',  # or another colormap you prefer
-    vmin=good_df['energy_density'].min(),
-    vmax=good_df['energy_density'].max()/2)
-good_portion_vs_entropy_ax.set_xlabel("Portion of Screen")
-good_portion_vs_entropy_ax.set_ylabel("Binary Cross Entropy")
+    vmin=df['energy_density'].min(),
+    vmax=df['energy_density'].max()/2)
+good_pve_ax.set_xlabel("Portion of Screen")
+good_pve_ax.set_ylabel("Binary Cross Entropy")
 # Compute a linear fit using numpy's polyfit
-x = good_df['screen_portion'].values
-y = good_df['cross_entropy'].values
-m, b = np.polyfit(x, y, 1)
-y_pred = m * x + b
-y_mean = np.mean(y)
-ss_tot = np.sum((y - y_mean)**2)
-ss_res = np.sum((y - y_pred)**2)
-r_squared = 1 - (ss_res / ss_tot)
+good_x = good_df['screen_portion'].values
+good_y = good_df['cross_entropy'].values
+good_m, good_b = np.polyfit(good_x, good_y, 1)
+good_y_pred = good_m * good_x + good_b
+good_y_mean = np.mean(good_y)
+good_ss_tot = np.sum((good_y - good_y_mean)**2)
+good_ss_res = np.sum((good_y - good_y_pred)**2)
+good_r_squared = 1 - (good_ss_res / good_ss_tot)
 # Plot the linear regression line
-good_portion_vs_entropy_ax.plot(x, y_pred, color='red', label=f'{round(m,1)}*x+{round(b,1)}, R^2={round(r_squared,3)}')
+good_pve_ax.plot(good_x, good_y_pred, color='red', label=f'{round(good_m,1)}*x+{round(good_b,1)}, R^2={round(good_r_squared,3)}')
 bad_df = df[df['cross_entropy'].apply(lambda x:x>2)].copy()
-bad_portion_vs_entropy_scatter = bad_portion_vs_entropy_ax.scatter(bad_df['screen_portion'],bad_df['cross_entropy'],
+bad_pve_scatter = bad_pve_ax.scatter(bad_df['screen_portion'],bad_df['cross_entropy'],
     c=bad_df['energy_density'],
     cmap='inferno',  # or another colormap you prefer
-    vmin=bad_df['energy_density'].min(),
-    vmax=bad_df['energy_density'].max()/2)
-bad_portion_vs_entropy_ax.set_xlabel("Portion of Screen")
-bad_portion_vs_entropy_ax.set_ylabel("Binary Cross Entropy")
+    vmin=df['energy_density'].min(),
+    vmax=df['energy_density'].max()/2)
+bad_pve_ax.set_xlabel("Portion of Screen")
+bad_pve_ax.set_ylabel("Binary Cross Entropy")
 # Compute a linear fit using numpy's polyfit
-x = bad_df['screen_portion'].values
-y = bad_df['cross_entropy'].values
-m, b = np.polyfit(x, y, 1)
-y_pred = m * x + b
-y_mean = np.mean(y)
-ss_tot = np.sum((y - y_mean)**2)
-ss_res = np.sum((y - y_pred)**2)
-r_squared = 1 - (ss_res / ss_tot)
-m, b = np.polyfit(bad_df['screen_portion'], bad_df['cross_entropy'], 1)
-bad_portion_vs_entropy_ax.plot(x, y_pred, color='red', label=f'{round(m,1)}*x+{round(b,1)},R^2={round(r_squared,3)}')
-bad_portion_vs_entropy_ax.legend()
-good_portion_vs_entropy_ax.legend()
-portion_vs_entropy_fig.colorbar(portion_vs_entropy_scatter, ax=portion_vs_entropy_ax, label=energy_density_label)
-portion_vs_entropy_fig.colorbar(good_portion_vs_entropy_scatter, ax=good_portion_vs_entropy_ax, label=energy_density_label)
-portion_vs_entropy_fig.colorbar(bad_portion_vs_entropy_scatter, ax=bad_portion_vs_entropy_ax, label=energy_density_label)
-portion_vs_entropy_fig.show()
+bad_x = bad_df['screen_portion'].values
+bad_y = bad_df['cross_entropy'].values
+bad_m, bad_b = np.polyfit(bad_x, bad_y, 1)
+bad_y_pred = bad_m * bad_x + bad_b
+bad_y_mean = np.mean(bad_y)
+bad_ss_tot = np.sum((bad_y - bad_y_mean)**2)
+bad_ss_res = np.sum((bad_y - bad_y_pred)**2)
+bad_r_squared = 1 - (bad_ss_res / bad_ss_tot)
+bad_m, bad_b = np.polyfit(bad_df['screen_portion'], bad_df['cross_entropy'], 1)
+bad_pve_ax.plot(bad_x, bad_y_pred, color='red', label=f'{round(bad_m,1)}*x+{round(bad_b,1)},R^2={round(bad_r_squared,3)}')
+bad_pve_ax.legend()
+pve_fig.colorbar(bad_pve_scatter, ax=bad_pve_ax, label=energy_density_label)
+good_pve_ax.legend()
+pve_fig.colorbar(good_pve_scatter, ax=good_pve_ax, label=energy_density_label)
+good_pve_ax.legend()
+pve_ax.plot(good_x, good_y_pred, color='red', label=f'{round(good_m,1)}*x+{round(good_b,1)},R^2={round(good_r_squared,3)}')
+pve_ax.plot(bad_x, bad_y_pred, color='red', label=f'{round(bad_m,1)}*x+{round(bad_b,1)},R^2={round(bad_r_squared,3)}')
+pve_ax.legend()
+pve_fig.colorbar(pve_scatter, ax=pve_ax, label=energy_density_label)
+pve_fig.show()
 ```
 
 During segmentation, it was observed that there seemed to be an ideal size where the model could more easily segment the defects. This can be seen in the above graph where in both low and high quality samples, the larger the sample on the screen the less agreement it had with the existing mask.
