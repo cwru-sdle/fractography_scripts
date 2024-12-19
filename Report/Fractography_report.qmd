@@ -429,7 +429,7 @@ df[columns] = df[columns].replace([np.inf, -np.inf], np.nan)
 df = df.dropna()
 results_df = initiating_defect_features.regression_on_df(df)
 print(results_df.loc[results_df["r2"].idxmax()])
-print(results_df.loc[results_df[(results_df['aspect_ratio']==False) &(results_df['sharpness']==False)]["r2"].idxmax()])    
+print(results_df.loc[results_df[(results_df['aspect_ratio']==False) &(results_df['max_sharpness']==False)]["r2"].idxmax()])
 initiating_defect_features.plot_feature_df(df[columns])
 ```
 
@@ -495,7 +495,8 @@ hist_fig.show()
 
 From the above graphic, we can see that the majority of samples are high quality.
 
-```{python portion vs entropy, echo=FALSE}
+```{python portion vs entropy, echo=FALSE,results='hide'}
+energy_density_label = "Energy Density [J/mm^3]"
 pve_fig, (pve_ax,good_pve_ax,bad_pve_ax) = plt.subplots(3, 1, tight_layout=True,figsize=(16,20))
 pve_scatter = pve_ax.scatter(df['screen_portion'],df['cross_entropy'],
     c=df['energy_density'],
@@ -504,7 +505,6 @@ pve_scatter = pve_ax.scatter(df['screen_portion'],df['cross_entropy'],
     vmax=df['energy_density'].max()/2)
 pve_ax.set_xlabel("Portion of Screen")
 pve_ax.set_ylabel("Binary Cross Entropy")
-print(df['cross_entropy'].apply(lambda x:x<2).value_counts().rename("Enrtopy<2"))
 good_df = df[df['cross_entropy'].apply(lambda x:x<2)].copy()
 good_pve_scatter = good_pve_ax.scatter(good_df['screen_portion'],good_df['cross_entropy'],
     c=good_df['energy_density'],
@@ -555,22 +555,26 @@ pve_fig.colorbar(pve_scatter, ax=pve_ax, label=energy_density_label)
 pve_fig.show()
 ```
 
-During segmentation, it was observed that there seemed to be an ideal size where the model could more easily segment the defects. This can be seen in the above graph where in both low and high quality samples, the larger the sample on the screen the less agreement it had with the existing mask.
+```{python showing counts, echo=FALSE}
+print(df['cross_entropy'].apply(lambda x:x<2).value_counts().rename("Cross Enrtopy<2"))
+```
+
+During segmentation, it was observed that there seemed to be an ideal size where the model could more easily segment the defects. This can be seen in the above graph where in both low and high quality samples, the larger the sample on the screen the less agreement it had with the existing mask. There are only 22 images that fail this test
 
 ```{python energy density vs entropy, echo=FALSE}
 entropy_vs_energy_fig, entropy_vs_energy_ax = plt.subplots(1, 1, tight_layout=True)
-entropy_vs_energy_scatter = entropy_vs_energy_ax.scatter(df['energy_density'],df['cross_entropy'],
-    c=df['energy_density'],
+entropy_vs_energy_scatter = entropy_vs_energy_ax.scatter(good_df['energy_density'],good_df['cross_entropy'],
+    c=good_df['energy_density'],
     cmap='inferno',  # or another colormap you prefer
-    vmin=df['energy_density'].min(),
-    vmax=df['energy_density'].max()/2)
+    vmin=good_df['energy_density'].min(),
+    vmax=good_df['energy_density'].max())
 entropy_vs_energy_ax.set_xlabel("Energy Density [J/mm^3]")
 entropy_vs_energy_ax.set_ylabel("Binary Cross Entropy")
 entropy_vs_energy_fig.colorbar(entropy_vs_energy_scatter, ax=entropy_vs_energy_ax, label=energy_density_label)
 entropy_vs_energy_fig.show()
 ```
 
-We can see that the model performs well.
+We can see that the model seems to perform the best under ideal processing parameters, with the 
 
 # Discussion
 

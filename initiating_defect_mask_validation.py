@@ -48,7 +48,7 @@ def KAN_regression(X,Y):
         return r2, mse
     y_pred = model(data['test_input'])
     r2, mse = r2_score(data['test_label'],y_pred)
-    return model, y_pred.item(), r2.item(), mse.item()
+    return model, y_pred.to("cpu").detach().numpy(), r2.item(), mse.item()
 
 def find_centroid(numpy_array):
     y,x= np.nonzero(numpy_array)
@@ -298,12 +298,15 @@ if __name__=="__main__":
     stress_vs_entropy_fig.show()
     # %%
     '''Regression All Images'''
-    features = ['energy_density', 'laser_power', 'laser_speed', 'aspect_ratio', 'max_sharpness','pixel_perimeter_ratio']
+    process_features = ['energy_density', 'laser_power', 'laser_speed']
+    image_features = ['aspect_ratio', 'max_sharpness','pixel_perimeter_ratio']
+    features = process_features + image_features
     columns = ["screen_portion","max_sharpness","aspect_ratio","perimeter","pixels",'cross_entropy']
     regressions = [initiating_defect_features.multiple_linear_regression,
         initiating_defect_features.polynomial_regression,
         initiating_defect_features.ridge_regression,
         initiating_defect_features.lasso_regression,
+        KAN_regression
         ]
     
     df[columns] = df[columns].replace([np.inf, -np.inf], np.nan)
