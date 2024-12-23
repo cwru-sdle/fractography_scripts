@@ -11,7 +11,7 @@ format:
     embed-resources: true
     code-overflow: wrap
     toc: true
-    toc-depth: 2
+    toc-depth: 3
     toc-title: Table of Contents
     toc-location: right
 bibliography: references.bib
@@ -29,7 +29,6 @@ css: style.css
     - Hypothesis testing to correlate defect features with mechanical properties
 - Key Findings:
     - Developed predictive model with polynomial regression
-    - Achieved R² of 0.465
     - Demonstrated marginal improvement in prediction of cycles to failure through extracted features
 
 # Abstract
@@ -112,6 +111,7 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import matplotlib.gridspec as gridspec
+import matplotlib.colors
 import re
 import ast
 import scipy
@@ -297,7 +297,6 @@ def jitter(arr, jitter_amount=2):
     return arr + np.random.uniform(-jitter_amount, jitter_amount, len(arr))
   
 success_scatter_fig,(SN_axs,PV_axs) = plt.subplots(2,1,figsize=(14,10))
-plt.figure(figsize=(14, 10))
 
 # Process Variables Plot
 SN_axs.scatter(jitter(x_not_SAM_process), jitter(y_not_SAM_process), color='red', label='No Points', alpha=0.7)
@@ -407,35 +406,41 @@ else:
 
 The hypothesis test is again narrowly failed, so the success and failure rate distributions accross the testing conditions are not significantly different.
 
-### Evaluating Features
+### Raw Implimentation
 
 ```{r Metrics explination figure,out.width="100%"}
 #| echo: false
-#| fig-cap: "Sharpness Figure"
+#| fig-cap: "Shape 1 and 2 should be significantly worse stress concentration factors than shape 3 because they have sharp edges. Aspect ratio can capture the difference between shape 2 and 3, but not between shape 1 and 3. Sharpness, by contrast, can capture both differences, so should be a better predictor of fatigue performance."
 knitr::opts_chunk$set(fig.width = 8, fig.height = 6)
 knitr::include_graphics("Figures/Sharpness_fig.png")
 ```
 
 From knowledge of fracture mechanics, we know there is a link between the shape of the initiating defect and the resulting fatigue properties, so it should be possible to extract features from these images which predict fatigue performance. The most common feature is the aspect ratio. However, as shown in figure 8, shape 1 and 3 have similar aspect ratio, but shape 1 should create a significantly worse concentrating factor because of the sharp edge in the bottom right corner. Sharpness measures the change in radial distance from the centroid, which better captures these sharp edges, as can be seen by the high value for both shape 1 and 2. 
 
-```{python initiating_defect_features,echo=FALSE,error=FALSE}
+```{python correlation_plot,echo=FALSE,error=FALSE,results='hide'}
 combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
 points_df = combined_df[~combined_df['points'].isna()]
-print(points_df['image_class'].value_counts())
-print(points_df['sample_id'].value_counts().head(10))
 df = initiating_defect_features.make_feature_df(points_df)
 columns = ["screen_portion","max_sharpness","aspect_ratio","perimeter","pixels"]
 df[columns] = df[columns].replace([np.inf, -np.inf], np.nan)
 df = df.dropna()
 results_df = initiating_defect_features.regression_on_df(df)
-print(results_df.loc[results_df["r2"].idxmax()])
-print(results_df.loc[results_df[(results_df['aspect_ratio']==False) &(results_df['max_sharpness']==False)]["r2"].idxmax()])
 initiating_defect_features.plot_feature_df(df[columns])
+results_df = initiating_defect_features.regression_on_df(df)
 ```
+```{python naive regression prints, echo=FALSE}
+print("Best Model")
+print(results_df.loc[results_df["r2"].idxmax()])
+print("Best Model Without Image Features")
+print(results_df.loc[results_df[(results_df['aspect_ratio']==False) &(results_df['max_sharpness']==False)]["r2"].idxmax()])
+```
+From the above correlation plot, sharpness and aspect ratio do vary based on the portion of the screen the defect takes up. Naively correlating the image features to the mechanical properties of the sample, we get poor results, with an increase in $R^2$ of only 0.02
 
-From the above correlation plot, sharpness and aspect ratio do vary based on the portion of the screen the defect takes up. This means the measurement is independent of imaging magnification. From the regression information, we can see that the best regression was a polynomial regression with all processing parameters and the sharpness, with and $R^2=0.465$, with the best regression excluding extracted features having an $R^2=0.441$. This implies that the extracted features can marginally improve prediction of mechanical properties.
+However, there are multiple images of the same initiating defect, and during segmentation it was observed that the quality of the mask seemed to depend on the size of the defect on the screen. The model seemed to be segmenting larger defects into different regions, with more extensive notation required to create a usable mask. Therefore, selecting only high quality masks may result in better properties.
 
-```{python initiating_defect_mask_validation,echo=FALSE,error=FALSE,results='hide'}
+### Validation
+
+```{python mask validation,echo=FALSE,error=FALSE,results='hide'}
 combined_df = pd.read_csv('/mnt/vstor/CSE_MSE_RXF131/lab-staging/mds3/AdvManu/fractography/combined_df.csv')
 points_df = combined_df[~combined_df['points'].isna()]
 df = initiating_defect_features.make_feature_df(points_df)
@@ -475,38 +480,38 @@ df["cross_entropy"] = df.apply(
         torch.Tensor(x['SAM_processed_output']/255)
     )
 ,axis=1).apply(lambda x: x.detach().item())
-
-for group_string, group in df.groupby(by="sample_id"):
-    # print(group_string+" running")
-    # group['SAM_output'] =group.apply(process_row,axis=1).apply(process_mask)
-    # group["cross_entropy"] = group.apply(
-    #     lambda x: torch.nn.functional.binary_cross_entropy(
-    #         torch.Tensor(cv2.resize(x['imgs'],(1024,1024))/255),
-    #         torch.Tensor(x['SAM_output']/255)
-    #     )
-    # ,axis=1)
-    best_rows.append(
-        group.loc[group['cross_entropy'].idxmin()]
+df["inverse_cross_entropy"] = df.apply(
+    lambda x: torch.nn.functional.binary_cross_entropy(
+        torch.Tensor(cv2.resize(x['imgs'],(1024,1024))/255),
+        torch.Tensor(initiating_defect_mask_validation.invert_mask(x['SAM_processed_output'])/255)
     )
+,axis=1).apply(lambda x: x.detach().item())
+df['SAM_processed_output'] = df.apply(lambda x: initiating_defect_mask_validation.invert_mask(x['SAM_processed_output']) if x['cross_entropy']>x["inverse_cross_entropy"] else x['SAM_processed_output'],axis=1)
+df['minimum_entropy'] = df.apply(lambda x:min(x['inverse_cross_entropy'],x['cross_entropy']),axis=1)
+
 hist_fig, hist_ax = plt.subplots(1, 1, tight_layout=True)
-hist_ax.hist(df['cross_entropy'],bins=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0])
+hist_ax.hist(df['minimum_entropy'],bins=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0])
+hist_ax.set_xlabel("Binary Cross Entropy")
+hist_ax.set_ylabel("Count")
 hist_fig.show()
 ```
 
-From the above graphic, we can see that the majority of samples are high quality.
+This was done by using the center of mass as a label, the selecting the largest defect in the image, then using the binary cross entropy between these two images as a metric for the agreement between these images. This will measure how well the model performs for that defects, since it compares the mask created with full human supervision and the mask created with minimal supervision.
+
+From the above histogram of results, we can see the majority of samples are high quality, with the higher the binary cross entropy, the fewer samples we find.
 
 ```{python portion vs entropy, echo=FALSE,results='hide'}
 energy_density_label = "Energy Density [J/mm^3]"
 pve_fig, (pve_ax,good_pve_ax,bad_pve_ax) = plt.subplots(3, 1, tight_layout=True,figsize=(16,20))
-pve_scatter = pve_ax.scatter(df['screen_portion'],df['cross_entropy'],
+pve_scatter = pve_ax.scatter(df['screen_portion'],df['minimum_entropy'],
     c=df['energy_density'],
     cmap='inferno',  # or another colormap you prefer
     vmin=df['energy_density'].min(),
     vmax=df['energy_density'].max()/2)
 pve_ax.set_xlabel("Portion of Screen")
 pve_ax.set_ylabel("Binary Cross Entropy")
-good_df = df[df['cross_entropy'].apply(lambda x:x<2)].copy()
-good_pve_scatter = good_pve_ax.scatter(good_df['screen_portion'],good_df['cross_entropy'],
+good_df = df[df['minimum_entropy'].apply(lambda x:x<2)].copy()
+good_pve_scatter = good_pve_ax.scatter(good_df['screen_portion'],good_df['minimum_entropy'],
     c=good_df['energy_density'],
     cmap='inferno',  # or another colormap you prefer
     vmin=df['energy_density'].min(),
@@ -515,7 +520,7 @@ good_pve_ax.set_xlabel("Portion of Screen")
 good_pve_ax.set_ylabel("Binary Cross Entropy")
 # Compute a linear fit using numpy's polyfit
 good_x = good_df['screen_portion'].values
-good_y = good_df['cross_entropy'].values
+good_y = good_df['minimum_entropy'].values
 good_m, good_b = np.polyfit(good_x, good_y, 1)
 good_y_pred = good_m * good_x + good_b
 good_y_mean = np.mean(good_y)
@@ -524,8 +529,8 @@ good_ss_res = np.sum((good_y - good_y_pred)**2)
 good_r_squared = 1 - (good_ss_res / good_ss_tot)
 # Plot the linear regression line
 good_pve_ax.plot(good_x, good_y_pred, color='red', label=f'{round(good_m,1)}*x+{round(good_b,1)}, R^2={round(good_r_squared,3)}')
-bad_df = df[df['cross_entropy'].apply(lambda x:x>2)].copy()
-bad_pve_scatter = bad_pve_ax.scatter(bad_df['screen_portion'],bad_df['cross_entropy'],
+bad_df = df[df['minimum_entropy'].apply(lambda x:x>2)].copy()
+bad_pve_scatter = bad_pve_ax.scatter(bad_df['screen_portion'],bad_df['minimum_entropy'],
     c=bad_df['energy_density'],
     cmap='inferno',  # or another colormap you prefer
     vmin=df['energy_density'].min(),
@@ -534,14 +539,14 @@ bad_pve_ax.set_xlabel("Portion of Screen")
 bad_pve_ax.set_ylabel("Binary Cross Entropy")
 # Compute a linear fit using numpy's polyfit
 bad_x = bad_df['screen_portion'].values
-bad_y = bad_df['cross_entropy'].values
+bad_y = bad_df['minimum_entropy'].values
 bad_m, bad_b = np.polyfit(bad_x, bad_y, 1)
 bad_y_pred = bad_m * bad_x + bad_b
 bad_y_mean = np.mean(bad_y)
 bad_ss_tot = np.sum((bad_y - bad_y_mean)**2)
 bad_ss_res = np.sum((bad_y - bad_y_pred)**2)
 bad_r_squared = 1 - (bad_ss_res / bad_ss_tot)
-bad_m, bad_b = np.polyfit(bad_df['screen_portion'], bad_df['cross_entropy'], 1)
+bad_m, bad_b = np.polyfit(bad_df['screen_portion'], bad_df['minimum_entropy'], 1)
 bad_pve_ax.plot(bad_x, bad_y_pred, color='red', label=f'{round(bad_m,1)}*x+{round(bad_b,1)},R^2={round(bad_r_squared,3)}')
 bad_pve_ax.legend()
 pve_fig.colorbar(bad_pve_scatter, ax=bad_pve_ax, label=energy_density_label)
@@ -556,14 +561,14 @@ pve_fig.show()
 ```
 
 ```{python showing counts, echo=FALSE}
-print(df['cross_entropy'].apply(lambda x:x<2).value_counts().rename("Cross Enrtopy<2"))
+print(df['minimum_entropy'].apply(lambda x:x<2).value_counts().rename("Cross Enrtopy<2"))
 ```
 
-During segmentation, it was observed that there seemed to be an ideal size where the model could more easily segment the defects. This can be seen in the above graph where in both low and high quality samples, the larger the sample on the screen the less agreement it had with the existing mask. There are only 22 images that fail this test
+During segmentation, it was observed that there seemed to be an ideal size where the model could more easily segment the defects. This can be seen in the above graph where in both low and high quality samples, the larger the sample on the screen the less agreement it had with the existing mask. When we cutoff samples with a binary cross entropy of over 2, there are only 22 images that fail this test, as seen in the above table.
 
-```{python energy density vs entropy, echo=FALSE}
+```{python energy density vs entropy, echo=FALSE,results='hide'}
 entropy_vs_energy_fig, entropy_vs_energy_ax = plt.subplots(1, 1, tight_layout=True)
-entropy_vs_energy_scatter = entropy_vs_energy_ax.scatter(good_df['energy_density'],good_df['cross_entropy'],
+entropy_vs_energy_scatter = entropy_vs_energy_ax.scatter(good_df['energy_density'],good_df['minimum_entropy'],
     c=good_df['energy_density'],
     cmap='inferno',  # or another colormap you prefer
     vmin=good_df['energy_density'].min(),
@@ -574,7 +579,178 @@ entropy_vs_energy_fig.colorbar(entropy_vs_energy_scatter, ax=entropy_vs_energy_a
 entropy_vs_energy_fig.show()
 ```
 
-We can see that the model seems to perform the best under ideal processing parameters, with the 
+We can see that segmentation works best with a moderate energy density. This is the region where the initiating defect is primarily gas pores, which are both significantly smaller and almost perfectly circular. Having a less complex shape likely makes them easier to segment, and they very rarely take up the majority of the screen because of the resolution limits of the microscope. Additionally, the moderate energy densities generally only had a single defect in the image, while those on the edges had many on the same image, which made the segmentation task more difficult.
+
+```{python Regression on Features,echo=FALSE,results='hide'}
+def plot_energy_density_residuals(data_df, model_df, idx_list, residual_type='MSE'):
+    """
+    Plot energy density residuals for a list of models and indices.
+
+    Parameters:
+        data_df (pd.DataFrame): DataFrame containing the input data.
+        model_df (pd.DataFrame): DataFrame containing the models and metadata.
+        idx_list (list of tuples): List of (name, index) tuples for the models to plot.
+        residual_type (str): Type of residual to compute ('MSE' or 'MAE').
+    """
+
+    def generate_random_colors(n):
+        """Generate a list of `n` random colors."""
+        return [(random.random(), random.random(), random.random()) for _ in range(n)]
+
+    # Initialize the plot
+    fig, ax = plt.subplots(1, 1, tight_layout=True, figsize=(10, 6))
+
+    for name, idx in idx_list:
+        # Extract the selected model and features
+        row = model_df.select_dtypes(include=['bool']).iloc[idx]
+        row = row[row]
+        X = data_df[row.index]
+
+        # Compute the target variable and residuals
+        if model_df['metric_used'].iloc[idx] == 'log(stress)':
+            Y = data_df['cycles'].apply(math.log) * data_df['stress_Mpa'].apply(math.log)
+        elif model_df['metric_used'].iloc[idx] == 'stress':
+            Y = data_df['cycles'].apply(math.log) * data_df['stress_Mpa']
+
+        y_pred = model_df.iloc[idx]['model'].predict(X)
+        residual = Y - y_pred if residual_type == 'MSE' else abs(Y - y_pred)
+
+        # Scatter plot
+        unique_classes = data_df['image_class'].unique()
+        color_map = {cls: i for i, cls in enumerate(unique_classes)}  # Map classes to integers
+        class_colors = data_df['image_class'].map(color_map)
+        ax.scatter(
+            x=data_df['energy_density'],
+            y=residual,
+            c=class_colors,
+            cmap=matplotlib.colors.ListedColormap(
+                generate_random_colors(len(data_df['image_class'].value_counts().index))
+            ),
+            alpha=0.6,
+            label=f"{name} ({residual_type})"
+        )
+
+        # Polynomial regression for residuals
+        poly_model, y_pred, mse, r2 = initiating_defect_features.polynomial_regression(
+            np.array(data_df['energy_density']).reshape(-1, 1),
+            np.array(residual),
+            degree=2
+        )
+        y_pred = poly_model.predict(np.array(data_df['energy_density']).reshape(-1, 1))
+
+        # Access the PolynomialFeatures step
+        linear_model = poly_model.named_steps['linearregression']
+        poly_features = poly_model.named_steps['polynomialfeatures']
+        coefficients = linear_model.coef_
+        intercept = linear_model.intercept_
+        feature_names = poly_features.get_feature_names_out(['x'])
+
+        # Display the equation
+        equation = f"{intercept:.0f}"
+        for coef, name in zip(coefficients, feature_names):
+            equation += f" + ({coef:.0f})*{name}"
+
+        # Plot the polynomial fit
+        sorted_indices = np.argsort(data_df['energy_density'])
+        sorted_energy_density = data_df['energy_density'].iloc[sorted_indices]
+        sorted_y_pred = y_pred[sorted_indices]
+        ax.plot(
+            sorted_energy_density,
+            sorted_y_pred,
+            label=f"{name} Fit: {equation}",
+            linewidth=2
+        )
+
+    # Finalize the plot
+    ax.set_xlabel("Energy Density")
+    ax.set_ylabel("Residuals" if residual_type == 'MSE' else "Absolute Residuals")
+    ax.legend(title="Models", loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.show()
+
+process_features = ['energy_density', 'laser_power', 'laser_speed']
+image_features = ['aspect_ratio', 'max_sharpness','pixel_perimeter_ratio']
+features = process_features + image_features
+regressions = [
+    initiating_defect_features.multiple_linear_regression,
+    initiating_defect_features.polynomial_regression,
+    initiating_defect_features.ridge_regression,
+    initiating_defect_features.lasso_regression,
+    # KAN_regression
+    ]
+filter_df = df[(df['screen_portion']>initiating_defect_mask_validation.FILTER)&(df['minimum_entropy']<2)].dropna().reset_index(drop=True)
+best_rows = []
+for group_string, group in filter_df.groupby(by="sample_id"):
+    best_rows.append(
+        group.loc[group['screen_portion'].idxmin()]
+    )
+filter_df = pd.DataFrame(best_rows).dropna().reset_index(drop=True)
+filter_results_df = initiating_defect_features.regression_on_df(filter_df,
+    regression_function_list=regressions,
+    features=features)
+print("Remaining Images: "+str(filter_df.shape[0]))
+all_features_best_idx = filter_results_df["r2"].idxmax()
+image_features_best_idx = filter_results_df[filter_results_df[image_features].eq(False).all(axis=1)]["r2"].idxmax()
+process_features_best_idx = filter_results_df[filter_results_df[process_features].eq(False).all(axis=1)]["r2"].idxmax()
+idxs = [("All Features",all_features_best_idx),("Image Features",image_features_best_idx),("Process Features",process_features_best_idx)]
+plot_energy_density_residuals(filter_df,filter_results_df,idx_list=idxs,residual_type='MSE')
+plot_energy_density_residuals(filter_df,filter_results_df,idx_list=idxs,residual_type='MAE')
+```
+```{python print validated regressions, echo=FALSE}
+for idx in idxs:
+    print(idx[0])
+    print(filter_results_df.iloc[idx[1]])
+```
+Additionally, by looking at individual examples, it can be seen that a filter on lower image size is required, and a filter on rows without all necessary information is needed. We can then perform a variety of regression techniques and plot the most effective ones. Additionally, from other tests, there must be a way to filter for different images on the same sample, and it seems that the image features are most predictive on smaller images. From the above regressions, we can see that the model predicts the mean well, with the residuals averaging 0. However, when looking at the absolute of the residuals, we can, surprisingly, find that the model performs best on more extreme samples. Additionally, when the regression has access to all features, it performs the best, with an improvement from $R^2$ of 0.212 to 0.322, a 65% improvement.
+
+```{python residual histograms,echo=FALSE}
+def histogram_residuals_by_image_class(data_df, model_df, idx):
+    """
+    Plot a histogram of residuals grouped by image class on a single graph.
+
+    Parameters:
+        data_df (pd.DataFrame): DataFrame containing the input data.
+        model_df (pd.DataFrame): DataFrame containing the models and metadata.
+        idx (int): Index of the model to use from model_df.
+    """
+    def generate_random_colors(n):
+        """Generate a list of `n` random colors."""
+        return [(random.random(), random.random(), random.random()) for _ in range(n)]
+
+    # Extract the selected model and features
+    row = model_df.select_dtypes(include=['bool']).iloc[idx]
+    row = row[row]
+    X = data_df[row.index]
+
+    # Compute the residuals
+    if model_df['metric_used'].iloc[idx] == 'log(stress)':
+        Y = data_df['cycles'].apply(math.log) * data_df['stress_Mpa'].apply(math.log)
+    elif model_df['metric_used'].iloc[idx] == 'stress':
+        Y = data_df['cycles'].apply(math.log) * data_df['stress_Mpa']
+
+    y_pred = model_df.iloc[idx]['model'].predict(X)
+    residual = Y - y_pred
+
+    # Create the histogram
+    unique_classes = data_df['image_class'].unique()
+    colors = generate_random_colors(len(unique_classes))
+
+    plt.figure(figsize=(10, 6))
+    for img_class, color in zip(unique_classes, colors):
+        class_residuals = residual[data_df['image_class'] == img_class]
+        plt.hist(
+            class_residuals,
+            bins=30,
+            alpha=0.5,
+            label=img_class,
+            color=color,
+            edgecolor='black'
+        )
+
+for idx in idxs:
+    initiating_defect_mask_validation.histogram_residuals_by_image_class(filter_df, filter_results_df, idx=idx[1])
+```
+
+We can also see that the residuals are approximately normally distributed, as would be expected.
 
 # Discussion
 

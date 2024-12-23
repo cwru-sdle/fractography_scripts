@@ -126,7 +126,7 @@ def multiple_linear_regression(X,Y):
     lr.fit(X_train_scaled, y_train)
     
     # Predict and evaluate
-    y_pred = lr.predict(X_test_scaled)
+    y_pred = lr.predict(X_test)
     mse = sklearn.metrics.mean_squared_error(y_test, y_pred)
     r2 = sklearn.metrics.r2_score(y_test, y_pred)
     return lr, y_pred, mse, r2
@@ -164,7 +164,7 @@ def ridge_regression(X,Y):
     ridge.fit(X_train_scaled, y_train)
 
     # Predict and evaluate
-    y_pred = ridge.predict(X_test_scaled)
+    y_pred = ridge.predict(X_test)
     mse = sklearn.metrics.mean_squared_error(y_test, y_pred)
     r2 = sklearn.metrics.r2_score(y_test, y_pred)
     return ridge, y_pred, mse, r2
@@ -183,7 +183,7 @@ def lasso_regression(X,Y):
     lasso.fit(X_train_scaled, y_train)
 
     # Predict and evaluate
-    y_pred = lasso.predict(X_test_scaled)
+    y_pred = lasso.predict(X_test)
     mse = sklearn.metrics.mean_squared_error(y_test, y_pred)
     r2 = sklearn.metrics.r2_score(y_test, y_pred)
     return lasso, y_pred, mse, r2
@@ -196,6 +196,7 @@ def make_feature_df(points_df):
     laser_speed = []
     cycles = []
     sample_id = []
+    image_type = []
     for row in points_df.iterrows():
         imgs.append(
             extract_largest_object(
@@ -209,6 +210,7 @@ def make_feature_df(points_df):
         stress.append(row[1]['test_stress_Mpa'])
         cycles.append(row[1]['cycles'])
         sample_id.append(row[1]['sample_id'])
+        image_type.append(row[1]['image_class'])
     portion_of_screen = Parallel(n_jobs=-1)(delayed(lambda x: x.sum() / (x.size * x.max()))(x) for x in imgs)
     max_sharpness = Parallel(n_jobs=-1)(delayed(find_sharpness)(x) for x in imgs)
     aspect_ratio = Parallel(n_jobs=-1)(delayed(calculate_aspect_ratio_rotated)(x) for x in imgs)
@@ -228,7 +230,8 @@ def make_feature_df(points_df):
         "stress_Mpa":stress,
         "laser_power":laser_power,
         "laser_speed":laser_speed,
-        "cycles": cycles
+        "cycles": cycles,
+        'image_class':image_type
     }
     return pd.DataFrame(data)
 
@@ -241,11 +244,11 @@ def plot_feature_df(df):
         r_squared = model.score(x, y)
         ax = plt.gca()
         ax.annotate(f"$R^2$ = {r_squared:.2f}", xy=(0.05, 0.9), xycoords=ax.transAxes, fontsize=10)
-
     # Create pairplot with linear regression
     g = sns.pairplot(df, kind="reg", plot_kws={"line_kws": {"color": "red"}})
     # Add R-squared annotations to each plot
     g.map(annotate_r2)
+    # return g
 # def regression_on_df(df,regression_function_list=[multiple_linear_regression,polynomial_regression,ridge_regression,lasso_regression]):
 #     metric_used_list = []
 #     regression_type = []
@@ -319,7 +322,6 @@ def regression_on_df(
     features = ['energy_density', 'laser_power', 'laser_speed', 'aspect_ratio', 'max_sharpness'],
     metrics = ['log_stress', 'stress']):
     results = []
-
     for metric in metrics:
         for regression in regression_function_list:
             # Generate all True/False combinations for each feature
@@ -330,7 +332,7 @@ def regression_on_df(
 
                     # Prepare Y based on the metric
                     if metric == 'log_stress':
-                        Y = df['cycles'].apply(math.log)
+                        Y = df['cycles'].apply(math.log)*df['stress_Mpa'].apply(math.log)
                         metric_used = 'log(stress)'
                     else:  # metric == 'stress'
                         Y = df['cycles'].apply(math.log)*df['stress_Mpa']
@@ -347,7 +349,9 @@ def regression_on_df(
                         "metric_used": metric_used,
                         "regression_type": regression.__name__,
                         "mse": mse,
-                        "r2": r2
+                        "r2": r2,
+                        'model': model,
+                        'y_pred':y_pred
                     }
                     
                     # Add information about which features were used
